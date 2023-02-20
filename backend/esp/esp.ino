@@ -4,6 +4,8 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>  // TODO write dokumentation custem install per zip https://github.com/me-no-dev/ESPAsyncWebServer
 
+#include "password.h"
+
 //#include <NTPClient.h>
 //#include <WiFiUdp.h>
 
@@ -38,8 +40,8 @@ Turnstate timers[NUMBER_OF_RELAIS];
 #define RELAIS_4_BLUE 12  //GPIO D6
 #define RELAIS_5_BLUE 13  //GPIO D7
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const char *ssid = "";
-const char *password = "";
+const char *ssid = SSID;
+const char *password = PASSWORD;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 uint8_t relais = 0b11111;
 uint8_t blinking = 0b11111;
@@ -170,6 +172,23 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 void setup() {
   Serial.begin(115200);
   Serial.println("");
+  Serial.println("TRY to open filesystem");
+  if(!LittleFS.begin()){
+    Serial.println("An Error has occurred while mounting LittleFS");
+    return;
+  }
+  // file expsamel ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  File file = LittleFS.open("/test_example.txt", "r");
+  if(!file){
+    Serial.println("Failed to open file for reading");
+    return;
+  }
+  Serial.println("File Content:");
+  while(file.available()){
+    Serial.write(file.read());
+  }
+  file.close();
+
   Serial.println("TRY to Connect to network");
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
