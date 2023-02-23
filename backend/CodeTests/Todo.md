@@ -1,0 +1,5 @@
+- Downloade fils from internet 
+- make login from accesspoint posseble
+- save wlan login in filsystem
+- json format
+- combinde fils

@@ -1,0 +1,44 @@
+//#define SSID "URE ssid"
+//#define PASSWORD "URE password"
+#include "password.h"
+#ifndef SSID_WLAN
+    #define ACCESS_POINT_SSID "D1 Mini"
+    #define ACCESS_POINT_PASSWORD "Pass"
+    #define FILE_WLAN_PASSWORD "env.wlan"
+#endif
+#define NUMBER_OF_RELAY 5
+// Define PINS ///////////////////////////////////////////////////////////////////////////////////////////////////
+#define BLINK_LEDS {0,2,14,12,13}
+//#define SHIFT_OUT 16
+//#define SHIFT_CLOCK 5
+//#define SHIFT_OUTPUT_ENABLE 4
+
+#define SHIFT_OUT 16           // GPIO DO
+#define SHIFT_SHIFT 5          // GPIO D1
+#define SHIFT_OUTPUT_ENABLE 4  //GPIO D2
+// Webserver /////////////////////////////////////////////////////////////////////////////////////////////////////
+#define WSERVER_PORT 80
+#define WSOCKET_ACCSESS "/ws"
+#define WEBSOCKET_EVENTS "/events"
+// Relais Startup state //////////////////////////////////////////////////////////////////////////////////////////
+// every bit is 1 Relais LSB is the fist relay
+#define RELAY_STARTUP 0b0
+// Get Files /////////////////////////////////////////////////////////////////////////////////////////////////////
+// ! Delete test file later
+#define URL_TEST "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/test_example.txt"
+#define FILE_TEST "/www/example.txt"
+// TODO create index etz file
+#define URL_INDEX_HTML 0
+#define URL_INDEX_CSS 0
+#define URL_INDEX_JS 0
+#define FILE_INDEX_HTML 0
+#define FILE_INDEX_CSS 0
+#define FILE_INDEX_JS 0
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#define SERIAL_SPEED 115200
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Do not touch /////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// edit values https://arduinojson.org/v6/assistant/#/step1
+#define LAGES_SOCKET_EVENT_FOR_ARDURINO_JSON 128
+#define SEND_RELAIS_STATE_FOR_8_RELAIS_ARDUINO_JSON 384
