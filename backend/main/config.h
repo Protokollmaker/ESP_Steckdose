@@ -28,12 +28,12 @@
 #define URL_TEST "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/test_example.txt"
 #define FILE_TEST "/www/example.txt"
 // TODO create index etz file
-#define URL_INDEX_HTML 0
-#define URL_INDEX_CSS 0
-#define URL_INDEX_JS 0
-#define FILE_INDEX_HTML 0
-#define FILE_INDEX_CSS 0
-#define FILE_INDEX_JS 0
+#define URL_INDEX_HTML  "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/indexPage/index.html"
+#define URL_INDEX_CSS   "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/indexPage/style.css"
+#define URL_INDEX_JS    "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/indexPage/index.js"
+#define FILE_INDEX_HTML "/index.html"
+#define FILE_INDEX_CSS  "/style.css"
+#define FILE_INDEX_JS   "/index.js"
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define SERIAL_SPEED 115200
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

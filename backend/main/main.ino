@@ -8,6 +8,8 @@ namespace Name {
   #include <LinkedList.h>
 }
 #include "LittleFS.h"
+#include <ESP8266HTTPClient.h>
+#include <WiFiClientSecureBearSSL.h>
 
 struct Timers {
     unsigned long time = 0;
@@ -29,6 +31,44 @@ bool promtWlanLogin = false;
 AsyncWebServer server(WSERVER_PORT);
 AsyncWebSocket ws(WSOCKET_ACCSESS); 
 AsyncEventSource events(WEBSOCKET_EVENTS);
+
+bool downloadToFile(const char* filename, const char* fileURL){
+    std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
+    client->setInsecure();
+    HTTPClient https;
+    Serial.print("[HTTPS] begin...\n");
+    if (!https.begin(*client, fileURL)) {
+        Serial.printf("[HTTPS] Unable to connect\n");
+        return 1;
+    }
+    Serial.print("[HTTPS] GET...\n");
+    int httpCode = https.GET();
+    if (!(httpCode > 0)) {
+        Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
+        return 1;
+    }
+    // HTTP header has been send and Server response header has been handled
+    Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
+
+    // file found at server
+    if (!(httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)) {
+        Serial.printf("[HTTPS] error \n");
+        return 1;
+    }
+    String payload = https.getString();
+    File file = LittleFS.open(filename, "w");
+    if (!file) {
+        Serial.println("[LittleFS] Failed to open file for writing");
+        return 1;
+    }
+
+    auto bytesWritten = file.write(payload.c_str(), payload.length());
+    Serial.printf("bytesWritten: %d\n", bytesWritten);
+    Serial.printf("should be %d\n", payload.length());
+    //Serial.println(payload.c_str());
+    file.close();
+    return 0;
+}
 
 void onRequest(AsyncWebServerRequest *request) {
   //Handle Unknown Request
@@ -125,10 +165,10 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 void setup() {
     Serial.begin(SERIAL_SPEED);
     Serial.println("\nTRY to open filesystem");
-    /*if(!LittleFS.begin()){
+    if(!LittleFS.begin()){
         Serial.println("An Error has occurred while mounting LittleFS");
         return;
-    }*/
+    }
     #ifdef SSID_WLAN
         WiFi.mode(WIFI_STA);
         WiFi.begin(SSID_WLAN, PASSWORD_WLAN);
@@ -157,18 +197,29 @@ void setup() {
     server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request) {
     //request->send(LittleFS, "/index.html");
     request->send(200, "text/plain", "Test"); // TODO Redidirect to webseite.com?ipaddress
-    // TODO Lidel webseite version
-  });
-  server.onNotFound(onRequest);
-  server.begin();
+        // TODO Lidel webseite version
+    });
+    server.onNotFound(onRequest);
+    server.begin();
+
+    if (!LittleFS.exists(FILE_INDEX_HTML)) {
+        Serial.print("[Downlade File] start Downladeing");
+        Serial.print(FILE_INDEX_HTML);
+        Serial.print(" from ");
+        Serial.println(URL_INDEX_HTML);
+        downloadToFile(FILE_INDEX_HTML, URL_INDEX_HTML);
+    }
+    server.on("/html", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(LittleFS, FILE_INDEX_HTML, "text/html"); });
+    
 }
 
 void loop() { 
     int listSize = TimerList.size();
 
-   Serial.print("There are ");
-   Serial.print(listSize);
-   Serial.print(" integers in the list. The negative ones are: ");
+   //Serial.print("There are ");
+   //Serial.print(listSize);
+   //Serial.print(" integers in the list. The negative ones are: ");
 
    // Print Negative numbers
    for (int h = 0; h < listSize; h++) {
