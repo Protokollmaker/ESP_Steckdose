@@ -63,7 +63,7 @@ bool downloadToFile(const char* filename, const char* fileURL){
     }
 
     auto bytesWritten = file.write(payload.c_str(), payload.length());
-    Serial.printf("bytesWritten: %d\n", bytesWritten);
+    Serial.printf("[LittleFS] bytesWritten: %d\n", bytesWritten);
     Serial.printf("should be %d\n", payload.length());
     //Serial.println(payload.c_str());
     file.close();
@@ -84,7 +84,7 @@ void eventSetRelayState(int t_relay, bool t_stata){
         relayState |= (1 << t_relay);
     else
         relayState &= ~(1 << t_relay);
-    Serial.print("shiftout: ");
+    Serial.print("[I/O] shiftout: ");
     Serial.print(relayState);
     Serial.printf("\n");
     // update Relay State on I/O PINS
@@ -154,7 +154,7 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
         StaticJsonDocument<LAGES_SOCKET_EVENT_FOR_ARDURINO_JSON> doc;
         DeserializationError err = deserializeJson(doc, (char*)data, len);
         if (err) {
-            Serial.print(F("deserializeJson() failed: "));
+            Serial.print(F("[JSON] deserializeJson() failed: "));
             Serial.println(err.c_str());
             return;
         }
@@ -164,26 +164,26 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 
 void setup() {
     Serial.begin(SERIAL_SPEED);
-    Serial.println("\nTRY to open filesystem");
+    Serial.println("\n[LittleFS] TRY to open filesystem");
     if(!LittleFS.begin()){
-        Serial.println("An Error has occurred while mounting LittleFS");
+        Serial.println("[LittleFS] An Error has occurred while mounting LittleFS");
         return;
     }
     #ifdef SSID_WLAN
         WiFi.mode(WIFI_STA);
         WiFi.begin(SSID_WLAN, PASSWORD_WLAN);
         if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-            Serial.printf("WiFi Failed!\n");
+            Serial.printf("[Wifi] WiFi Failed!\n");
             return;
         }
     #else
         // TODO IMPLEMENT Can't connect and open file get login
     #endif
-    Serial.println("Define I/O Modes");
+    Serial.println("[I/O] Define I/O Modes");
     pinMode(SHIFT_OUT, OUTPUT);
     pinMode(SHIFT_SHIFT, OUTPUT);
     pinMode(SHIFT_OUTPUT_ENABLE, OUTPUT);
-    Serial.println("IP address: ");
+    Serial.println("[Wifi] IP address: ");
     Serial.println(WiFi.localIP());
 
     ws.onEvent(onEvent);
