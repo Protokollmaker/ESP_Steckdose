@@ -15,6 +15,7 @@ struct Timers {
     unsigned long time = 0;
     int Relay = 0;
     bool state = 0;
+    bool run = 0;
 };
 
 int timer_pins[] = BLINK_LEDS;
@@ -91,7 +92,49 @@ void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t in
   //Handle body
 }
 
-void eventSetRelayState(int t_relay, bool t_stata){
+void shiftoutData() {
+    digitalWrite(SHIFT_SHIFT, LOW);
+    shiftOut(SHIFT_OUT, SHIFT_SHIFT, MSBFIRST, relayState);
+    digitalWrite(SHIFT_OUTPUT_ENABLE, LOW);
+    digitalWrite(SHIFT_OUTPUT_ENABLE, HIGH);
+}
+
+void sentTimerNew() {
+    Timers timer_obj = TimerList.get(TimerList.size() - 1);
+    StaticJsonDocument<128> event;
+    event["eventtype"] = "newTimer";
+    event["time"] = timer_obj.time;
+    event["Relay"] = timer_obj.Relay;
+    event["turn"] = timer_obj.state;
+    event["run"] = timer_obj.run;
+    String output;
+    serializeJson(event, output);
+    ws.textAll(output);
+}
+
+void sentTimerUpdate(int t_timer) {
+    Timers timer_obj = TimerList.get(t_timer);
+    StaticJsonDocument<128> event;
+    event["eventtype"] = "updateTimer";
+    event["time"] = timer_obj.time;
+    event["Relay"] = timer_obj.Relay;
+    event["turn"] = timer_obj.state;
+    event["run"] = timer_obj.run;
+    String output;
+    serializeJson(event, output);
+    ws.textAll(output);
+}
+
+void sentTimerdelete(int t_timer) {
+    StaticJsonDocument<64> event;
+    event["eventtype"] = "endTimer";
+    event["timerID"] = t_timer;
+    String output;
+    serializeJson(event, output);
+    ws.textAll(output);
+}
+
+void setRelayState(int t_relay, bool t_stata){
     if (t_stata)
         relayState |= (1 << t_relay);
     else
@@ -100,34 +143,36 @@ void eventSetRelayState(int t_relay, bool t_stata){
     Serial.print(relayState);
     Serial.printf("\n");
     // update Relay State on I/O PINS
-    digitalWrite(SHIFT_SHIFT, LOW);
-    shiftOut(SHIFT_OUT, SHIFT_SHIFT, MSBFIRST, relayState);
-    digitalWrite(SHIFT_OUTPUT_ENABLE, LOW);
-    digitalWrite(SHIFT_OUTPUT_ENABLE, HIGH);
+    shiftoutData();
 }
 
-bool eventGetRelayState(int t_relay){
+void eventSetRelayState(int t_relay, bool t_stata){
+    setRelayState(t_relay, t_stata);
+    StaticJsonDocument<96> event;
+    event["eventtype"] = "setRelayState";
+    event["Relay"] = t_relay;
+    event["turn"] = t_stata;
+    String output;
+    serializeJson(event, output);
+    ws.textAll(output);
+}
+
+bool getRelayState(int t_relay){
     return relayState & (1 << t_relay);
 }
+
 void onMassageEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, StaticJsonDocument<LAGES_SOCKET_EVENT_FOR_ARDURINO_JSON>& doc) {
     const char* eventtype = doc["eventtype"];
     if (!strcmp(eventtype, "setRelayState")) {
         eventSetRelayState(doc["Relay"], doc["turn"]);
-        StaticJsonDocument<96> event;
-        event["eventtype"] = "setRelayState";
-        event["Relay"] = doc["Relay"];
-        event["turn"] = doc["turn"];
-        String output;
-        serializeJson(event, output);
-        ws.textAll(output);
         return;
     }
-    if (!strcmp(eventtype, "getRelayState")) {
+    if (!strcmp(eventtype, "getRelayState")) { // Wandle in einzehlene events
         StaticJsonDocument<SEND_RELAIS_STATE_FOR_8_RELAIS_ARDUINO_JSON> event;
         event["eventtype"] = "getRelayState";
         JsonArray data = event.createNestedArray("data");
         for (int i = 0; i < NUMBER_OF_RELAY; i++) {
-            data[i]["state"] = eventGetRelayState(i);
+            data[i]["state"] = getRelayState(i);
         }
         String output;
         serializeJson(event, output);
@@ -135,8 +180,50 @@ void onMassageEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, Static
         return;
     } 
     if   (!strcmp(eventtype, "setTimer")) {
-        Timers timer = {doc["time"], doc["Relais"], doc["turn"]};
+        Timers timer = {doc["time"], doc["Relay"], doc["turn"], doc["run"]};
         TimerList.add(timer);
+        sentTimerNew();
+        return;
+    }
+    if   (!strcmp(eventtype, "stopTimer")) {
+        Timers timer_obj = TimerList.get(doc["timerID"]);
+        timer_obj.run = doc["run"];
+        TimerList.set(doc["timerID"], timer_obj);
+        sentTimerUpdate(doc["timerID"]);
+        return;
+    }
+    if   (!strcmp(eventtype, "delTimer")) {
+        TimerList.remove(doc["timerID"]);
+        sentTimerdelete(doc["timerID"]);
+        return;
+    }
+    if   (!strcmp(eventtype, "getTimers")) {
+        int listSize = TimerList.size();
+        for (int h = 0; h < listSize; h++) {
+            Timers timer_obj = TimerList.get(h);
+            StaticJsonDocument<128> event;
+            event["eventtype"] = "updateTimer";
+            event["time"] = timer_obj.time;
+            event["Relay"] = timer_obj.Relay;
+            event["turn"] = timer_obj.state;
+            event["run"] = timer_obj.run;
+            String output;
+            serializeJson(event, output);
+            client->text(output);
+        }
+        return;
+    }
+    if   (!strcmp(eventtype, "getTimer")) {
+        Timers timer_obj = TimerList.get(doc["timerID"]);
+        StaticJsonDocument<128> event;
+        event["eventtype"] = "updateTimer";
+        event["time"] = timer_obj.time;
+        event["Relay"] = timer_obj.Relay;
+        event["turn"] = timer_obj.state;
+        event["run"] = timer_obj.run;
+        String output;
+        serializeJson(event, output);
+        client->text(output);
         return;
     }
     if   (!strcmp(eventtype, "UpdateFrontend")) {
@@ -152,7 +239,7 @@ void onMassageEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, Static
         ESP.restart();
         return;
     }
-    if   (!strcmp(eventtype, "deleteWlanConfig")) {
+    if   (!strcmp(eventtype, "delWlanConfig")) {
         #ifndef SSID_WLAN
             deleteFile(FILE_WLAN_PASSWORD);
             ESP.restart();
@@ -242,8 +329,7 @@ void setup() {
         pinMode(blink_pins[i], OUTPUT);
     }
     Serial.println("[I/O] Define state");
-    // TODO make shiftout seperate
-    eventSetRelayState(0,0); // Shift out 
+    shiftoutData();
     for (int i = 0; i < NUMBER_OF_RELAY; i++){
         digitalWrite(blink_pins[i], LOW);
     }
@@ -273,15 +359,15 @@ void setup() {
         Serial.println(URL_INDEX_HTML);
         downloadToFile(FILE_INDEX_HTML, URL_INDEX_HTML);
     }
-    server.on("/html", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(LittleFS, FILE_INDEX_HTML, "text/html"); });
+    server.on("/html", HTTP_GET, [](AsyncWebServerRequest *request){ 
+        request->send(LittleFS, FILE_INDEX_HTML, "text/html"); 
+    });
     
 }
 
 void loop() { 
     int listSize = TimerList.size();
-   //Serial.print("There are ");
-   //Serial.print(listSize);
+
    if (timerState) {
         timerState = 0;
    } else {
@@ -289,21 +375,23 @@ void loop() {
    }
 
    for (int h = 0; h < listSize; h++) {
-        // Get value from list
-        Timers val = TimerList.get(h);
-        val.time == val.time--;
-        if (!val.time){
-            eventSetRelayState(val.Relay, val.state);
+        Timers timer_obj = TimerList.get(h);
+        if (!timer_obj.run)
+          continue;
+        timer_obj.time == timer_obj.time--;
+        if (!timer_obj.time){
+            eventSetRelayState(timer_obj.Relay, timer_obj.state);
             Serial.println("[TIMER] Timer endet");
             TimerList.remove(h);
-            digitalWrite(blink_pins[val.Relay],LOW);
-            break;            
+            digitalWrite(blink_pins[timer_obj.Relay],LOW);
+            sentTimerdelete(h);
+            continue;            
         }
-        TimerList.set(h, val);
-        digitalWrite(blink_pins[val.Relay],timerState);
-        // If the value is negative, print it
+        TimerList.set(h, timer_obj);
+        digitalWrite(blink_pins[timer_obj.Relay],timerState);
+        // If the timer_objue is negative, print it
         Serial.print("[TIMER] Timerleft : ");
-        Serial.print(val.time);
+        Serial.print(timer_obj.time);
         Serial.print(" : Timer : ");
         Serial.println(h);
    }

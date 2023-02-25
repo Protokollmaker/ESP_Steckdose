@@ -79,17 +79,6 @@ F 3 "~" H 6250 2800 50  0001 C CNN
 	1    6250 2850
 	-1   0    0    1   
 $EndComp
-$Comp
-L Device:LED_RGBC D1
-U 1 1 63FC673F
-P 6250 1850
-F 0 "D1" H 6250 2350 50  0000 C CNN
-F 1 "LED_RGBC" H 6250 2250 50  0000 C CNN
-F 2 "" H 6250 1800 50  0001 C CNN
-F 3 "~" H 6250 1800 50  0001 C CNN
-	1    6250 1850
-	-1   0    0    1   
-$EndComp
 Wire Wire Line
 	500  6450 500  6250
 $Comp
@@ -209,10 +198,7 @@ Wire Wire Line
 	8450 2850 8450 2750
 Connection ~ 7500 2850
 Wire Wire Line
-	7500 1850 8450 1850
-Wire Wire Line
 	8450 1850 8450 1750
-Connection ~ 7500 1850
 NoConn ~ 8750 1150
 NoConn ~ 8750 2150
 NoConn ~ 8750 3300
@@ -221,8 +207,6 @@ NoConn ~ 8750 5400
 Connection ~ 7500 6200
 Wire Wire Line
 	7500 5050 7500 6200
-Wire Wire Line
-	7500 1850 7500 2850
 Wire Wire Line
 	7500 2850 7500 4000
 Wire Wire Line
@@ -233,7 +217,6 @@ Wire Wire Line
 	5250 1050 5250 2050
 Wire Wire Line
 	8450 1050 8450 1150
-Connection ~ 5250 1050
 Wire Wire Line
 	4000 1150 5150 1150
 Wire Wire Line
@@ -286,8 +269,6 @@ Wire Wire Line
 Connection ~ 4850 5600
 Wire Wire Line
 	4850 5600 4850 6400
-Wire Wire Line
-	5250 1050 8450 1050
 Wire Wire Line
 	5150 2400 8150 2400
 Wire Wire Line
@@ -349,17 +330,6 @@ F 1 "R" H 6920 2805 50  0000 L CNN
 F 2 "" V 6780 2850 50  0001 C CNN
 F 3 "~" H 6850 2850 50  0001 C CNN
 	1    6850 2850
-	0    -1   -1   0   
-$EndComp
-$Comp
-L Device:R R?
-U 1 1 640856C9
-P 6800 1850
-F 0 "R?" H 6870 1896 50  0000 L CNN
-F 1 "R" H 6870 1805 50  0000 L CNN
-F 2 "" V 6730 1850 50  0001 C CNN
-F 3 "~" H 6800 1850 50  0001 C CNN
-	1    6800 1850
 	0    -1   -1   0   
 $EndComp
 $Comp
@@ -442,10 +412,6 @@ Wire Wire Line
 	5250 2050 5550 2050
 Wire Wire Line
 	5850 2050 6050 2050
-Wire Wire Line
-	6450 1850 6650 1850
-Wire Wire Line
-	6950 1850 7500 1850
 NoConn ~ 6050 1850
 NoConn ~ 6050 2850
 NoConn ~ 6050 4000
@@ -770,4 +736,38 @@ Connection ~ 3600 2200
 Wire Wire Line
 	3600 2200 3600 2150
 NoConn ~ 3200 1050
+Connection ~ 5250 1050
+Wire Wire Line
+	6950 1850 7500 1850
+Wire Wire Line
+	6450 1850 6650 1850
+$Comp
+L Device:R R?
+U 1 1 640856C9
+P 6800 1850
+F 0 "R?" H 6870 1896 50  0000 L CNN
+F 1 "R" H 6870 1805 50  0000 L CNN
+F 2 "" V 6730 1850 50  0001 C CNN
+F 3 "~" H 6800 1850 50  0001 C CNN
+	1    6800 1850
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	5250 1050 8450 1050
+Wire Wire Line
+	7500 1850 7500 2850
+Connection ~ 7500 1850
+Wire Wire Line
+	7500 1850 8450 1850
+$Comp
+L Device:LED_RGBC D1
+U 1 1 63FC673F
+P 6250 1850
+F 0 "D1" H 6250 2350 50  0000 C CNN
+F 1 "LED_RGBC" H 6250 2250 50  0000 C CNN
+F 2 "" H 6250 1800 50  0001 C CNN
+F 3 "~" H 6250 1800 50  0001 C CNN
+	1    6250 1850
+	-1   0    0    1   
+$EndComp
 $EndSCHEMATC
