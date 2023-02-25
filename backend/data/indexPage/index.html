@@ -5,9 +5,35 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Steckdosenleiste</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
     <h1>This is a Test page</h1>
+    <div class="relay" style="background-color: #d1d1d1;">
+        <h3>Steckdose 1</h3>
+        <div class="test">
+            <span class="time">90252</span>
+            <button class="power">
+                <span class="material-symbols-outlined" style="color:#ffffff;">power_settings_new</span>
+            </button>
+            <button class="on">
+                <span class="material-symbols-outlined" style="color:#ffffff;">play_arrow</span>
+            </button>
+            <button class="off">
+                <span class="material-symbols-outlined" style="color:#ffffff;">pause</span>
+            </button>
+            <a href="./timer/TODO">
+                <span class="material-symbols-outlined">arrow_forward_ios</span>
+        </a>
+        </div>
+        <div class="timers">
+            <div class="timer">
+                <span>30s/</span>
+                <span>1000s</span>
+                <progress id="file" value="30" max="1000"></progress>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

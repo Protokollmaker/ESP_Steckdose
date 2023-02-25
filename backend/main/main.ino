@@ -24,6 +24,8 @@ Name::LinkedList<Timers> TimerList = Name::LinkedList<Timers>();
 uint8_t relayState = RELAY_STARTUP;
 uint8_t timerState = 0b0;
 
+int blink_pins[] = BLINK_LEDS;
+
 bool promtWlanLogin = false;
 
 
@@ -31,6 +33,16 @@ bool promtWlanLogin = false;
 AsyncWebServer server(WSERVER_PORT);
 AsyncWebSocket ws(WSOCKET_ACCSESS); 
 AsyncEventSource events(WEBSOCKET_EVENTS);
+
+bool deleteFile(const char* filename) {
+    Serial.printf("[LittleFS] delete file");
+    Serial.println(filename);
+    if (!LittleFS.remove(filename)) {
+        Serial.println("[LittleFS]Failed to delete file");
+        return 1;
+    }
+    return 0;
+}
 
 bool downloadToFile(const char* filename, const char* fileURL){
     std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
@@ -125,17 +137,59 @@ void onMassageEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, Static
     if   (!strcmp(eventtype, "setTimer")) {
         Timers timer = {doc["time"], doc["Relais"], doc["turn"]};
         TimerList.add(timer);
+        return;
     }
     if   (!strcmp(eventtype, "UpdateFrontend")) {
-        client->text("NOT IMPLEMENTED"); // TODO IMPLEMENT
+        if (!strcmp(doc["file"], FILE_INDEX_HTML)) {
+            deleteFile(FILE_INDEX_HTML);
+        }
+        if (!strcmp(doc["file"], FILE_INDEX_CSS)) {
+            deleteFile(FILE_INDEX_CSS);
+        }
+        if (!strcmp(doc["file"], FILE_INDEX_JS)) {
+            deleteFile(FILE_INDEX_JS);
+        }
+        ESP.restart();
         return;
     }
     if   (!strcmp(eventtype, "deleteWlanConfig")) {
-        client->text("NOT IMPLEMENTED"); // TODO IMPLEMENT
+        #ifndef SSID_WLAN
+            deleteFile(FILE_WLAN_PASSWORD);
+            ESP.restart();
+        #else 
+            StaticJsonDocument<96> event;
+            event["eventtype"] = "error";
+            event["msg"] = "Password was defined by #definined";
+            String output;
+            serializeJson(event, output);
+            client->text(output);
+        #endif
         return;
     }
-    if   (!strcmp(eventtype, "setPassword")) {
-        client->text("NOT IMPLEMENTED"); // TODO IMPLEMENT
+    if   (!strcmp(eventtype, "setWlanConfig")) {
+        #ifndef SSID_WLAN
+            StaticJsonDocument<96> serialize;
+            serialize["SSID"] = doc["SSID"];
+            serialize["Password"] = doc["Password"];
+            String output;
+            serializeJson(doc, output);
+            File file = LittleFS.open(FILE_WLAN_PASSWORD, "w");
+            if (!file) {
+                Serial.println("[LittleFS] Failed to open file for writing");
+                return;
+            }
+            auto bytesWritten = file.write(output.c_str(), output.length());
+            Serial.printf("[LittleFS] bytesWritten: %d\n", bytesWritten);
+            Serial.printf("should be %d\n", output.length());
+            ESP.restart();
+        #else 
+            StaticJsonDocument<96> event;
+            event["eventtype"] = "error";
+            event["msg"] = "Password was defined by #definined";
+            String output;
+            serializeJson(event, output);
+            client->text(output);
+        #endif
         return;
     }
 }
@@ -183,6 +237,16 @@ void setup() {
     pinMode(SHIFT_OUT, OUTPUT);
     pinMode(SHIFT_SHIFT, OUTPUT);
     pinMode(SHIFT_OUTPUT_ENABLE, OUTPUT);
+
+    for (int i = 0; i < NUMBER_OF_RELAY; i++){
+        pinMode(blink_pins[i], OUTPUT);
+    }
+    Serial.println("[I/O] Define state");
+    // TODO make shiftout seperate
+    eventSetRelayState(0,0); // Shift out 
+    for (int i = 0; i < NUMBER_OF_RELAY; i++){
+        digitalWrite(blink_pins[i], LOW);
+    }
     Serial.println("[Wifi] IP address: ");
     Serial.println(WiFi.localIP());
 
@@ -216,25 +280,36 @@ void setup() {
 
 void loop() { 
     int listSize = TimerList.size();
-
    //Serial.print("There are ");
    //Serial.print(listSize);
-   //Serial.print(" integers in the list. The negative ones are: ");
+   if (timerState) {
+        timerState = 0;
+   } else {
+        timerState = 1;
+   }
 
-   // Print Negative numbers
    for (int h = 0; h < listSize; h++) {
-
-      // Get value from list
-      Timers val = TimerList.get(h);
-
-      // If the value is negative, print it
-      Serial.print(" ");
-      Serial.print(val.time);
-      Serial.print(" ");
-      Serial.print(val.Relay);
-      Serial.print(" ");
-      Serial.print(val.state);
-      Serial.print("\n");  
+        // Get value from list
+        Timers val = TimerList.get(h);
+        val.time == val.time--;
+        if (!val.time){
+            eventSetRelayState(val.Relay, val.state);
+            Serial.println("[TIMER] Timer endet");
+            TimerList.remove(h);
+            digitalWrite(blink_pins[val.Relay],LOW);
+            break;            
+        }
+        TimerList.set(h, val);
+        digitalWrite(blink_pins[val.Relay],timerState);
+        // If the value is negative, print it
+        Serial.print("[TIMER] Timerleft : ");
+        Serial.print(val.time);
+        Serial.print(" : Timer : ");
+        Serial.println(h);
    }
     delay(1000);
 }
+
+// TODO Bratcast timers 
+// TODO Bratcast timer endings
+// TODO Timer Stop

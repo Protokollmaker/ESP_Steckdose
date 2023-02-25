@@ -1,3 +1,25 @@
-h1 {
-    background-color: blue;
+button {
+    border-radius: 1000px;
+    aspect-ratio: 2 / 2;
+    height: 40px;
+    border: none;
+}
+
+.power {
+    background-color: #C0392B;
+}
+
+.relay {
+    border-radius: 5px;
+}
+
+.relay h3 {
+    margin: 5px 0px 5px 5px;
+}
+
+.on {
+    background-color: #16A085;
+}
+.time {
+    text-align: center;
 }
