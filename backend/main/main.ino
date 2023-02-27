@@ -168,15 +168,15 @@ void onMassageEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, Static
         return;
     }
     if (!strcmp(eventtype, "getRelayState")) { // Wandle in einzehlene events
-        StaticJsonDocument<SEND_RELAIS_STATE_FOR_8_RELAIS_ARDUINO_JSON> event;
-        event["eventtype"] = "getRelayState";
-        JsonArray data = event.createNestedArray("data");
         for (int i = 0; i < NUMBER_OF_RELAY; i++) {
-            data[i]["state"] = getRelayState(i);
+            StaticJsonDocument<96> event;
+            event["eventtype"] = "setRelayState";
+            event["Relay"] = i;
+            event["turn"] = getRelayState(i);
+            String output;
+            serializeJson(event, output);
+            client->text(output);
         }
-        String output;
-        serializeJson(event, output);
-        client->text(output);
         return;
     } 
     if   (!strcmp(eventtype, "setTimer")) {
