@@ -41,4 +41,3 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // edit values https://arduinojson.org/v6/assistant/#/step1
 #define LAGES_SOCKET_EVENT_FOR_ARDURINO_JSON 128
-#define SEND_RELAIS_STATE_FOR_8_RELAIS_ARDUINO_JSON 384

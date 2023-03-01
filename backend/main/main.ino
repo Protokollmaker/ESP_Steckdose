@@ -353,20 +353,48 @@ void setup() {
     server.begin();
 
     if (!LittleFS.exists(FILE_INDEX_HTML)) {
-        Serial.print("[Downlade File] start Downladeing");
+        Serial.print("[Downlade File] start Downladeing html");
         Serial.print(FILE_INDEX_HTML);
         Serial.print(" from ");
         Serial.println(URL_INDEX_HTML);
         downloadToFile(FILE_INDEX_HTML, URL_INDEX_HTML);
     }
+    if (!LittleFS.exists(FILE_INDEX_CSS)) {
+        Serial.print("[Downlade File] start Downladeing css");
+        Serial.print(FILE_INDEX_CSS);
+        Serial.print(" from ");
+        Serial.println(URL_INDEX_CSS);
+        downloadToFile(FILE_INDEX_CSS, URL_INDEX_CSS);
+    }
+    if (!LittleFS.exists(FILE_INDEX_JS)) {
+        Serial.print("[Downlade File] start Downladeing");
+        Serial.print(FILE_INDEX_JS);
+        Serial.print(" from ");
+        Serial.println(URL_INDEX_JS);
+        downloadToFile(FILE_INDEX_JS, URL_INDEX_JS);
+    }
+
     server.on("/html", HTTP_GET, [](AsyncWebServerRequest *request){ 
         request->send(LittleFS, FILE_INDEX_HTML, "text/html"); 
+    });
+    server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){ 
+        request->send(LittleFS, FILE_INDEX_CSS, "text/css"); 
+    });
+    server.on("/index.js", HTTP_GET, [](AsyncWebServerRequest *request){ 
+        request->send(LittleFS, URL_INDEX_JS, "text/js"); 
     });
     
 }
 
 void loop() { 
     int listSize = TimerList.size();
+    if (listSize){
+        StaticJsonDocument<32> event;
+        event["eventtype"] = "Tick";
+        String output;
+        serializeJson(event, output);
+        ws.textAll(output);
+    }
 
    if (timerState) {
         timerState = 0;
