@@ -168,6 +168,15 @@ void onMassageEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, Static
         return;
     }
     if (!strcmp(eventtype, "getRelayState")) { // Wandle in einzehlene events
+        StaticJsonDocument<96> event;
+        event["eventtype"] = "getRelayState";
+        event["Relay"] = doc["Relay"];
+        event["turn"] = getRelayState(doc["Relay"]);
+        String output;
+        serializeJson(event, output);
+        client->text(output);
+    } 
+    if (!strcmp(eventtype, "getRelaysState")) { // Wandle in einzehlene events
         for (int i = 0; i < NUMBER_OF_RELAY; i++) {
             StaticJsonDocument<96> event;
             event["eventtype"] = "setRelayState";
@@ -381,7 +390,7 @@ void setup() {
         request->send(LittleFS, FILE_INDEX_CSS, "text/css"); 
     });
     server.on("/index.js", HTTP_GET, [](AsyncWebServerRequest *request){ 
-        request->send(LittleFS, URL_INDEX_JS, "text/js"); 
+        request->send(LittleFS, FILE_INDEX_JS, "text/js"); 
     });
     
 }
@@ -406,15 +415,16 @@ void loop() {
         Timers timer_obj = TimerList.get(h);
         if (!timer_obj.run)
           continue;
-        timer_obj.time == timer_obj.time--;
         if (!timer_obj.time){
             eventSetRelayState(timer_obj.Relay, timer_obj.state);
             Serial.println("[TIMER] Timer endet");
             TimerList.remove(h);
             digitalWrite(blink_pins[timer_obj.Relay],LOW);
             sentTimerdelete(h);
+            h -= 1; // maby
             continue;            
         }
+        timer_obj.time == timer_obj.time--;
         TimerList.set(h, timer_obj);
         digitalWrite(blink_pins[timer_obj.Relay],timerState);
         // If the timer_objue is negative, print it
