@@ -12,7 +12,7 @@ namespace Name {
 #include <WiFiClientSecureBearSSL.h>
 
 struct Timers {
-    unsigned long time = 0;
+    int time = 0;
     int Relay = 0;
     bool state = 0;
     bool run = 0;
@@ -21,6 +21,7 @@ struct Timers {
 int timer_pins[] = BLINK_LEDS;
 
 Name::LinkedList<Timers> TimerList = Name::LinkedList<Timers>();
+Name::LinkedList<int> delElements = Name::LinkedList<int>();
 
 uint8_t relayState = RELAY_STARTUP;
 uint8_t timerState = 0b0;
@@ -99,30 +100,28 @@ void shiftoutData() {
     digitalWrite(SHIFT_OUTPUT_ENABLE, HIGH);
 }
 
-void sentTimerNew() {
-    Timers timer_obj = TimerList.get(TimerList.size() - 1);
-    StaticJsonDocument<128> event;
-    event["eventtype"] = "newTimer";
-    event["time"] = timer_obj.time;
-    event["Relay"] = timer_obj.Relay;
-    event["turn"] = timer_obj.state;
-    event["run"] = timer_obj.run;
+String eventGetRelayState(int relay){
+    StaticJsonDocument<96> event;
+    event["eventtype"] = "setRelayState";
+    event["Relay"] = relay;
+    event["turn"] = getRelayState(relay);
     String output;
     serializeJson(event, output);
-    ws.textAll(output);
+    return output;
 }
 
-void sentTimerUpdate(int t_timer) {
-    Timers timer_obj = TimerList.get(t_timer);
+String TimerRequest(int timerID) {
+    Timers timer_obj = TimerList.get(timerID);
     StaticJsonDocument<128> event;
-    event["eventtype"] = "updateTimer";
+    event["eventtype"] = "Timer";
+    event["timerID"] = timerID;
     event["time"] = timer_obj.time;
     event["Relay"] = timer_obj.Relay;
     event["turn"] = timer_obj.state;
     event["run"] = timer_obj.run;
     String output;
     serializeJson(event, output);
-    ws.textAll(output);
+    return output;
 }
 
 void sentTimerdelete(int t_timer) {
@@ -148,13 +147,7 @@ void setRelayState(int t_relay, bool t_stata){
 
 void eventSetRelayState(int t_relay, bool t_stata){
     setRelayState(t_relay, t_stata);
-    StaticJsonDocument<96> event;
-    event["eventtype"] = "setRelayState";
-    event["Relay"] = t_relay;
-    event["turn"] = t_stata;
-    String output;
-    serializeJson(event, output);
-    ws.textAll(output);
+    ws.textAll(eventGetRelayState(t_relay));
 }
 
 bool getRelayState(int t_relay){
@@ -168,71 +161,42 @@ void onMassageEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, Static
         return;
     }
     if (!strcmp(eventtype, "getRelayState")) { // Wandle in einzehlene events
-        StaticJsonDocument<96> event;
-        event["eventtype"] = "getRelayState";
-        event["Relay"] = doc["Relay"];
-        event["turn"] = getRelayState(doc["Relay"]);
-        String output;
-        serializeJson(event, output);
-        client->text(output);
+        client->text(eventGetRelayState(doc["Relay"]));
+        return;
     } 
     if (!strcmp(eventtype, "getRelaysState")) { // Wandle in einzehlene events
         for (int i = 0; i < NUMBER_OF_RELAY; i++) {
-            StaticJsonDocument<96> event;
-            event["eventtype"] = "setRelayState";
-            event["Relay"] = i;
-            event["turn"] = getRelayState(i);
-            String output;
-            serializeJson(event, output);
-            client->text(output);
+            client->text(eventGetRelayState(i));
         }
         return;
     } 
     if   (!strcmp(eventtype, "setTimer")) {
         Timers timer = {doc["time"], doc["Relay"], doc["turn"], doc["run"]};
         TimerList.add(timer);
-        sentTimerNew();
+        ws.textAll(TimerRequest(TimerList.size() - 1));
+        return;
+    }
+    if   (!strcmp(eventtype, "getTimers")) {
+        int listSize = TimerList.size();
+        for (int h = 0; h < listSize; h++) {
+            client->text(TimerRequest(h));
+        }
+        return;
+    }
+    if   (!strcmp(eventtype, "getTimer")) {
+        client->text(TimerRequest(doc["timerID"]));
         return;
     }
     if   (!strcmp(eventtype, "stopTimer")) {
         Timers timer_obj = TimerList.get(doc["timerID"]);
         timer_obj.run = doc["run"];
         TimerList.set(doc["timerID"], timer_obj);
-        sentTimerUpdate(doc["timerID"]);
+        ws.textAll(TimerRequest(doc["timerID"]));
         return;
     }
     if   (!strcmp(eventtype, "delTimer")) {
         TimerList.remove(doc["timerID"]);
         sentTimerdelete(doc["timerID"]);
-        return;
-    }
-    if   (!strcmp(eventtype, "getTimers")) {
-        int listSize = TimerList.size();
-        for (int h = 0; h < listSize; h++) {
-            Timers timer_obj = TimerList.get(h);
-            StaticJsonDocument<128> event;
-            event["eventtype"] = "updateTimer";
-            event["time"] = timer_obj.time;
-            event["Relay"] = timer_obj.Relay;
-            event["turn"] = timer_obj.state;
-            event["run"] = timer_obj.run;
-            String output;
-            serializeJson(event, output);
-            client->text(output);
-        }
-        return;
-    }
-    if   (!strcmp(eventtype, "getTimer")) {
-        Timers timer_obj = TimerList.get(doc["timerID"]);
-        StaticJsonDocument<128> event;
-        event["eventtype"] = "updateTimer";
-        event["time"] = timer_obj.time;
-        event["Relay"] = timer_obj.Relay;
-        event["turn"] = timer_obj.state;
-        event["run"] = timer_obj.run;
-        String output;
-        serializeJson(event, output);
-        client->text(output);
         return;
     }
     if   (!strcmp(eventtype, "UpdateFrontend")) {
@@ -314,6 +278,9 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 
 void setup() {
     Serial.begin(SERIAL_SPEED);
+    Serial.println("\n[Config] set wdt");
+    //ESP.wdtDisable();
+    //ESP.wdtEnable(1500); // max loop time 1,5sec
     Serial.println("\n[LittleFS] TRY to open filesystem");
     if(!LittleFS.begin()){
         Serial.println("[LittleFS] An Error has occurred while mounting LittleFS");
@@ -353,10 +320,8 @@ void setup() {
         request->send(200, "text/plain", String(ESP.getFreeHeap()));
     });
 
-    server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request) {
-    //request->send(LittleFS, "/index.html");
-    request->send(200, "text/plain", "Test"); // TODO Redidirect to webseite.com?ipaddress
-        // TODO Lidel webseite version
+    server.on("/text", HTTP_ANY, [](AsyncWebServerRequest *request) {
+        request->send(200, "text/plain", "Test"); // TODO Redidirect to webseite.com?ipaddress
     });
     server.onNotFound(onRequest);
     server.begin();
@@ -382,8 +347,7 @@ void setup() {
         Serial.println(URL_INDEX_JS);
         downloadToFile(FILE_INDEX_JS, URL_INDEX_JS);
     }
-
-    server.on("/html", HTTP_GET, [](AsyncWebServerRequest *request){ 
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){ 
         request->send(LittleFS, FILE_INDEX_HTML, "text/html"); 
     });
     server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){ 
@@ -397,45 +361,49 @@ void setup() {
 
 void loop() { 
     int listSize = TimerList.size();
+    
+     
     if (listSize){
+        Serial.print("Num of Timer");
+        Serial.println(listSize);
         StaticJsonDocument<32> event;
         event["eventtype"] = "Tick";
         String output;
         serializeJson(event, output);
         ws.textAll(output);
     }
-
-   if (timerState) {
+    if (timerState) {
         timerState = 0;
-   } else {
+    } else {
         timerState = 1;
-   }
-
-   for (int h = 0; h < listSize; h++) {
-        Timers timer_obj = TimerList.get(h);
-        if (!timer_obj.run)
-          continue;
-        if (!timer_obj.time){
-            eventSetRelayState(timer_obj.Relay, timer_obj.state);
-            Serial.println("[TIMER] Timer endet");
-            TimerList.remove(h);
-            digitalWrite(blink_pins[timer_obj.Relay],LOW);
-            sentTimerdelete(h);
-            h -= 1; // maby
+    }
+    for (int h = 0; h < listSize; h++) {
+        // Get value from list
+        Timers val = TimerList.get(h);
+        val.time == val.time--;
+        if (!val.time){
+            eventSetRelayState(val.Relay, val.state);
+            digitalWrite(blink_pins[val.Relay],LOW);
+            delElements.add(h);
             continue;            
         }
-        timer_obj.time == timer_obj.time--;
-        TimerList.set(h, timer_obj);
-        digitalWrite(blink_pins[timer_obj.Relay],timerState);
-        // If the timer_objue is negative, print it
+        TimerList.set(h, val);
+        digitalWrite(blink_pins[val.Relay],timerState);
+        // If the value is negative, print it
         Serial.print("[TIMER] Timerleft : ");
-        Serial.print(timer_obj.time);
+        Serial.print(val.time);
         Serial.print(" : Timer : ");
         Serial.println(h);
-   }
+    }
+
+    int deletedElements = 0;
+    for (int i = 0; i < delElements.size();i++){
+        int index = delElements.pop() - deletedElements;
+        Serial.print("[TIMER] Timer endet");
+        Serial.println(index);
+        sentTimerdelete(index);
+        TimerList.remove(index);
+        deletedElements++;
+    }
     delay(1000);
 }
-
-// TODO Bratcast timers 
-// TODO Bratcast timer endings
-// TODO Timer Stop

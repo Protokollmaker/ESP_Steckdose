@@ -1,21 +1,22 @@
 <script lang="ts">
+    // @ts-nocheck
     import { onMount } from 'svelte';
     let connections = "192.168.178.122";
     let webSocket = 0;
-    let relays = [];
+    let relays:object = [];
     
     let timer_relay = 0;
     let timer_time = 10;
     let timer_turn = 1;
     let timer_run = 1;
-    let timers = [];
+    let timers:object = [];
     onMount(async () => {
 
 	});
     function connect() {
         let connectionstring = "ws://" + connections + "/ws" 
         webSocket = new WebSocket(connectionstring, "protocolOne");
-        webSocket.onopen = function(e) {
+        webSocket.onopen = function(event: any) {
             webSocket.send(JSON.stringify(
                 {eventtype: "getRelaysState"}
             ));
@@ -24,18 +25,17 @@
             ));
         };
 
-        webSocket.onmessage = function(event) {
+        webSocket.onmessage = function(event: any) {
                 //alert(`[message] Data received from server: ${event.data}`);
-                let data = JSON.parse(event.data);
+                let data: object = JSON.parse(event.data);
                 console.log("data: ", data);
                 switch (data.eventtype) {
                     case "setRelayState":
                         relays[data.Relay] = data;
                         return;
-                    case "newTimer":
+                    case "Timer":
                         //{"eventtype": "newTimer","time": 2,"Relay": 0,"turn": true,"run": true}
-                        timers.push(data);
-                        timers = [...timers];
+                        timers[data.timerID] = data;
                         return;
                     case "endTimer":
                         timers.splice(data.timerID, 1);
@@ -59,7 +59,7 @@
         webSocket.close();
     }
     
-    function setRelais(Relay, state) {
+    function setRelais(Relay:number, state:bool) {
         webSocket.send(JSON.stringify(
             {eventtype: "setRelayState", Relay: Relay, turn:state}
             ));
