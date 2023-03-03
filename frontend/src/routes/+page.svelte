@@ -107,7 +107,9 @@
     <input bind:value={timer_turn}>
     <span>Start/Stop</span>
     <input bind:value={timer_run}>
-    <button on:click={setTimer}>Submit</button>
+    {#if webSocket}
+        <button on:click={setTimer}>Submit</button>
+    {/if}
     <br/>
     {#each timers as { Relay, turn, run, time}, i}
         <span> {i} Relais: {Relay + 1}</span>

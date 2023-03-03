@@ -7,6 +7,7 @@
     #define FILE_WLAN_PASSWORD "env.wlan"
 #endif
 #define NUMBER_OF_RELAY 5
+#define NUMBER_OF_TIMERS 20
 // Define PINS ///////////////////////////////////////////////////////////////////////////////////////////////////
 #define BLINK_LEDS {0,2,14,12,13}
 //#define SHIFT_OUT 16
@@ -40,4 +41,8 @@
 // Do not touch /////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // edit values https://arduinojson.org/v6/assistant/#/step1
-#define LAGES_SOCKET_EVENT_FOR_ARDURINO_JSON 128
+#define LAGES_SOCKET_EVENT_FOR_ARDURINO_JSON 200
+#define LOG_DOWNLADE(URL, FILE) Serial.print("[Downlade File] start Downladeing html"); \
+                                Serial.print(FILE); \
+                                Serial.print(" from "); \
+                                Serial.println(URL);

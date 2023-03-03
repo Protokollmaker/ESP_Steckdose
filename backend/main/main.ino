@@ -4,9 +4,7 @@
 
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h> 
-namespace Name {
-  #include <LinkedList.h>
-}
+
 #include "LittleFS.h"
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecureBearSSL.h>
@@ -20,8 +18,15 @@ struct Timers {
 
 int timer_pins[] = BLINK_LEDS;
 
-Name::LinkedList<Timers> TimerList = Name::LinkedList<Timers>();
-Name::LinkedList<int> delElements = Name::LinkedList<int>();
+constexpr int getBitNumberTimerUsed(int mumberOfTimer, int typesize = 8){
+    int numberOfBits = NUMBER_OF_TIMERS/typesize;
+    if (NUMBER_OF_TIMERS % typesize)
+        numberOfBits += 1;
+    return numberOfBits;
+}
+
+uint8_t TimerUsed[getBitNumberTimerUsed(NUMBER_OF_TIMERS - 1)];
+Timers Timerlist[NUMBER_OF_TIMERS];
 
 uint8_t relayState = RELAY_STARTUP;
 uint8_t timerState = 0b0;
@@ -30,7 +35,51 @@ int blink_pins[] = BLINK_LEDS;
 
 bool promtWlanLogin = false;
 
+bool getTimerInUse(int timerID, int typesize = 8){
+    return TimerUsed[timerID/typesize] & (1 << timerID % typesize);
+}
 
+void setTimerInUse(int timerID,int state, int typesize = 8){
+    if (state)
+        TimerUsed[timerID/typesize] |= (1 << timerID % typesize);
+    else
+        TimerUsed[timerID/typesize] &= ~(1 << timerID % typesize);
+}
+
+int newTimerIndex = 0;
+bool setNewTimer(Timers timer){
+    int indexTimerNotInUse = -1;
+    for (int i = 0; i < NUMBER_OF_TIMERS; i++){
+        if (getTimerInUse(i)) {continue;} // if timer in use skip
+        indexTimerNotInUse = i;
+        break;
+    }
+    if (indexTimerNotInUse == -1){
+        Serial.print("[Timer] no Timer Free");
+        return 1;
+    }
+    newTimerIndex = indexTimerNotInUse;
+    setTimer(timer, indexTimerNotInUse);
+    return 0;
+}
+
+bool setTimer(Timers timer, int timerID){
+    if (timerID >= NUMBER_OF_TIMERS){ Serial.print("[Timer] over index setTimer");return 1;}
+    setTimerInUse(timerID, 1);
+    Timers timer_obj = timer;
+    Timerlist[timerID] = timer_obj;
+    return 0;
+}
+
+Timers getTimer(int timerID){
+    return Timerlist[timerID];
+}
+
+bool delTimer(int timerID){
+    if (timerID >= NUMBER_OF_TIMERS){ Serial.print("[Timer] over index delTimer");return 1;}
+    setTimerInUse(timerID, 0);
+    return 0;
+}
 
 AsyncWebServer server(WSERVER_PORT);
 AsyncWebSocket ws(WSOCKET_ACCSESS); 
@@ -79,19 +128,15 @@ bool downloadToFile(const char* filename, const char* fileURL){
     auto bytesWritten = file.write(payload.c_str(), payload.length());
     Serial.printf("[LittleFS] bytesWritten: %d\n", bytesWritten);
     Serial.printf("should be %d\n", payload.length());
-    //Serial.println(payload.c_str());
     file.close();
     return 0;
 }
 
-void onRequest(AsyncWebServerRequest *request) {
-  //Handle Unknown Request
+void onRequest(AsyncWebServerRequest *request) { //Handle Unknown Request
   request->send(404, "text/plain", "Not found");
 }
 
-void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-  //Handle body
-}
+void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {}
 
 void shiftoutData() {
     digitalWrite(SHIFT_SHIFT, LOW);
@@ -111,7 +156,7 @@ String eventGetRelayState(int relay){
 }
 
 String TimerRequest(int timerID) {
-    Timers timer_obj = TimerList.get(timerID);
+    Timers timer_obj = getTimer(timerID);
     StaticJsonDocument<128> event;
     event["eventtype"] = "Timer";
     event["timerID"] = timerID;
@@ -139,8 +184,7 @@ void setRelayState(int t_relay, bool t_stata){
     else
         relayState &= ~(1 << t_relay);
     Serial.print("[I/O] shiftout: ");
-    Serial.print(relayState);
-    Serial.printf("\n");
+    Serial.println(relayState);
     // update Relay State on I/O PINS
     shiftoutData();
 }
@@ -172,30 +216,30 @@ void onMassageEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, Static
     } 
     if   (!strcmp(eventtype, "setTimer")) {
         Timers timer = {doc["time"], doc["Relay"], doc["turn"], doc["run"]};
-        TimerList.add(timer);
-        ws.textAll(TimerRequest(TimerList.size() - 1));
+        setNewTimer(timer); // ! Implement error
+        ws.textAll(TimerRequest(newTimerIndex));
         return;
     }
     if   (!strcmp(eventtype, "getTimers")) {
-        int listSize = TimerList.size();
-        for (int h = 0; h < listSize; h++) {
-            client->text(TimerRequest(h));
+        for (int i = 0; i < NUMBER_OF_TIMERS; i++){
+            if (!getTimerInUse(i)) {continue;} 
+            client->text(TimerRequest(i)); 
         }
         return;
     }
     if   (!strcmp(eventtype, "getTimer")) {
-        client->text(TimerRequest(doc["timerID"]));
+        client->text(TimerRequest(doc["timerID"])); 
         return;
     }
-    if   (!strcmp(eventtype, "stopTimer")) {
-        Timers timer_obj = TimerList.get(doc["timerID"]);
+    if   (!strcmp(eventtype, "updateTimer")) {
+        Timers timer_obj = {doc["time"], doc["Relay"], doc["turn"], doc["run"]};
         timer_obj.run = doc["run"];
-        TimerList.set(doc["timerID"], timer_obj);
+        setTimer(timer_obj, doc["timerID"]); // ! Implement error
         ws.textAll(TimerRequest(doc["timerID"]));
         return;
     }
     if   (!strcmp(eventtype, "delTimer")) {
-        TimerList.remove(doc["timerID"]);
+        delTimer(doc["timerID"]); // ! Implement error
         sentTimerdelete(doc["timerID"]);
         return;
     }
@@ -278,7 +322,7 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 
 void setup() {
     Serial.begin(SERIAL_SPEED);
-    Serial.println("\n[Config] set wdt");
+    //Serial.println("\n[Config] set wdt");
     //ESP.wdtDisable();
     //ESP.wdtEnable(1500); // max loop time 1,5sec
     Serial.println("\n[LittleFS] TRY to open filesystem");
@@ -309,13 +353,17 @@ void setup() {
     for (int i = 0; i < NUMBER_OF_RELAY; i++){
         digitalWrite(blink_pins[i], LOW);
     }
+    Serial.println("[Timer] Init timer");
+    for (int i = 0; i < NUMBER_OF_TIMERS;i++){
+        delTimer(i);
+    }
     Serial.println("[Wifi] IP address: ");
     Serial.println(WiFi.localIP());
 
     ws.onEvent(onEvent);
     server.addHandler(&ws);
     server.addHandler(&events);
-
+    Serial.println("[Webserver] Init Sides");
     server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send(200, "text/plain", String(ESP.getFreeHeap()));
     });
@@ -324,27 +372,18 @@ void setup() {
         request->send(200, "text/plain", "Test"); // TODO Redidirect to webseite.com?ipaddress
     });
     server.onNotFound(onRequest);
-    server.begin();
+    
 
     if (!LittleFS.exists(FILE_INDEX_HTML)) {
-        Serial.print("[Downlade File] start Downladeing html");
-        Serial.print(FILE_INDEX_HTML);
-        Serial.print(" from ");
-        Serial.println(URL_INDEX_HTML);
+        LOG_DOWNLADE(FILE_INDEX_HTML, URL_INDEX_HTML);
         downloadToFile(FILE_INDEX_HTML, URL_INDEX_HTML);
     }
     if (!LittleFS.exists(FILE_INDEX_CSS)) {
-        Serial.print("[Downlade File] start Downladeing css");
-        Serial.print(FILE_INDEX_CSS);
-        Serial.print(" from ");
-        Serial.println(URL_INDEX_CSS);
+        LOG_DOWNLADE(FILE_INDEX_CSS, URL_INDEX_CSS);
         downloadToFile(FILE_INDEX_CSS, URL_INDEX_CSS);
     }
     if (!LittleFS.exists(FILE_INDEX_JS)) {
-        Serial.print("[Downlade File] start Downladeing");
-        Serial.print(FILE_INDEX_JS);
-        Serial.print(" from ");
-        Serial.println(URL_INDEX_JS);
+        LOG_DOWNLADE(FILE_INDEX_JS, URL_INDEX_JS);
         downloadToFile(FILE_INDEX_JS, URL_INDEX_JS);
     }
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){ 
@@ -356,54 +395,44 @@ void setup() {
     server.on("/index.js", HTTP_GET, [](AsyncWebServerRequest *request){ 
         request->send(LittleFS, FILE_INDEX_JS, "text/js"); 
     });
-    
+    Serial.println("[Webserver] Begin");
+    server.begin();
 }
 
 void loop() { 
-    int listSize = TimerList.size();
+    bool oneTimerAktiv = 0;
     
-     
-    if (listSize){
-        Serial.print("Num of Timer");
-        Serial.println(listSize);
+    if (timerState) { timerState = 0; } 
+    else            { timerState = 1; }
+
+    // TODO use memory pointers to optimice programm
+    for (int i = 0; i < NUMBER_OF_TIMERS; i++){
+        if (!getTimerInUse(i)) { continue; }
+        oneTimerAktiv = 1;
+        Timers timer = getTimer(i);
+        if (!timer.run) { continue; }
+        if (!timer.time){
+            delTimer(i);
+            digitalWrite(blink_pins[timer.Relay],LOW);
+            eventSetRelayState(timer.Relay, timer.state);
+            continue;
+        }
+        timer.time = timer.time--;
+        setTimer(timer, i); // TODO timer not counting down
+        digitalWrite(blink_pins[timer.Relay],timerState);
+        Serial.print("[TIMER] Timerleft : ");
+        Serial.print(timer.time);
+        Serial.print(" : Timer : ");
+        Serial.println(i);
+        
+    }
+
+    if (oneTimerAktiv){
         StaticJsonDocument<32> event;
         event["eventtype"] = "Tick";
         String output;
         serializeJson(event, output);
         ws.textAll(output);
-    }
-    if (timerState) {
-        timerState = 0;
-    } else {
-        timerState = 1;
-    }
-    for (int h = 0; h < listSize; h++) {
-        // Get value from list
-        Timers val = TimerList.get(h);
-        val.time == val.time--;
-        if (!val.time){
-            eventSetRelayState(val.Relay, val.state);
-            digitalWrite(blink_pins[val.Relay],LOW);
-            delElements.add(h);
-            continue;            
-        }
-        TimerList.set(h, val);
-        digitalWrite(blink_pins[val.Relay],timerState);
-        // If the value is negative, print it
-        Serial.print("[TIMER] Timerleft : ");
-        Serial.print(val.time);
-        Serial.print(" : Timer : ");
-        Serial.println(h);
-    }
-
-    int deletedElements = 0;
-    for (int i = 0; i < delElements.size();i++){
-        int index = delElements.pop() - deletedElements;
-        Serial.print("[TIMER] Timer endet");
-        Serial.println(index);
-        sentTimerdelete(index);
-        TimerList.remove(index);
-        deletedElements++;
     }
     delay(1000);
 }
