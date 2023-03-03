@@ -372,7 +372,7 @@ void setup() {
         request->send(200, "text/plain", "Test"); // TODO Redidirect to webseite.com?ipaddress
     });
     server.onNotFound(onRequest);
-    
+    server.begin();
 
     if (!LittleFS.exists(FILE_INDEX_HTML)) {
         LOG_DOWNLADE(FILE_INDEX_HTML, URL_INDEX_HTML);
@@ -396,7 +396,7 @@ void setup() {
         request->send(LittleFS, FILE_INDEX_JS, "text/js"); 
     });
     Serial.println("[Webserver] Begin");
-    server.begin();
+    
 }
 
 void loop() { 
@@ -415,10 +415,11 @@ void loop() {
             delTimer(i);
             digitalWrite(blink_pins[timer.Relay],LOW);
             eventSetRelayState(timer.Relay, timer.state);
+            sentTimerdelete(i);
             continue;
         }
-        timer.time = timer.time--;
-        setTimer(timer, i); // TODO timer not counting down
+        timer.time = timer.time - 1;
+        setTimer(timer, i);
         digitalWrite(blink_pins[timer.Relay],timerState);
         Serial.print("[TIMER] Timerleft : ");
         Serial.print(timer.time);
