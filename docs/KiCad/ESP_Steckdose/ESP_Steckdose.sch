@@ -16,12 +16,12 @@ $EndDescr
 $Comp
 L MCU_Module:WeMos_D1_mini U1
 U 1 1 63FB08E9
-P 1200 2700
-F 0 "U1" H 1550 1850 50  0000 C CNN
-F 1 "WeMos_D1_mini" H 1550 1950 50  0000 C CNN
-F 2 "Module:WEMOS_D1_mini_light" H 1200 1550 50  0001 C CNN
-F 3 "https://wiki.wemos.cc/products:d1:d1_mini#documentation" H -650 1550 50  0001 C CNN
-	1    1200 2700
+P 1200 3700
+F 0 "U1" H 1550 2850 50  0000 C CNN
+F 1 "WeMos_D1_mini" H 1550 2950 50  0000 C CNN
+F 2 "Module:WEMOS_D1_mini_light" H 1200 2550 50  0001 C CNN
+F 3 "https://wiki.wemos.cc/products:d1:d1_mini#documentation" H -650 2550 50  0001 C CNN
+	1    1200 3700
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -136,25 +136,17 @@ F 3 "http://omronfs.omron.com/en_US/ecb/products/pdf/en-g5v_1.pdf" H 8650 1450 5
 	1    8650 1450
 	1    0    0    -1  
 $EndComp
-NoConn ~ 1600 2200
+NoConn ~ 1600 3200
 Wire Wire Line
-	1600 2300 1650 2300
-Wire Wire Line
-	1650 2300 1650 1250
+	1600 3300 1650 3300
 Wire Wire Line
 	1650 1250 3200 1250
 Wire Wire Line
-	1600 2500 1850 2500
-Wire Wire Line
-	1850 2500 1850 1650
-Wire Wire Line
-	1850 1650 3200 1650
-Wire Wire Line
-	1750 2400 1750 1350
+	1600 3500 1850 3500
 Wire Wire Line
 	1750 1350 3200 1350
 Wire Wire Line
-	1600 2400 1750 2400
+	1600 3400 1750 3400
 $Comp
 L power:+5V #PWR?
 U 1 1 63FF61AE
@@ -167,17 +159,15 @@ F 3 "" H 2600 750 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	2600 750  3600 750 
+	2600 750  3000 750 
 Wire Wire Line
 	3600 750  3600 850 
 Wire Wire Line
 	2600 750  1100 750 
-Wire Wire Line
-	1100 750  1100 1900
 Connection ~ 2600 750 
-NoConn ~ 800  2300
-NoConn ~ 800  2600
-NoConn ~ 800  2700
+NoConn ~ 800  3300
+NoConn ~ 800  3600
+NoConn ~ 800  3700
 Wire Wire Line
 	7500 6200 8450 6200
 Wire Wire Line
@@ -408,24 +398,6 @@ NoConn ~ 6050 5050
 NoConn ~ 6050 6200
 Wire Wire Line
 	4650 2650 6050 2650
-Wire Wire Line
-	1600 2800 4650 2800
-Wire Wire Line
-	4650 2800 4650 3800
-Wire Wire Line
-	4650 3800 6050 3800
-Wire Wire Line
-	1600 2900 4550 2900
-Wire Wire Line
-	4550 2900 4550 4850
-Wire Wire Line
-	4550 4850 6050 4850
-Wire Wire Line
-	1600 3000 4450 3000
-Wire Wire Line
-	4450 3000 4450 6000
-Wire Wire Line
-	4450 6000 6050 6000
 $Comp
 L power:GND #PWR?
 U 1 1 640C8A3E
@@ -440,24 +412,24 @@ $EndComp
 $Comp
 L power:GND #PWR?
 U 1 1 640C9244
-P 1200 3900
-F 0 "#PWR?" H 1200 3650 50  0001 C CNN
-F 1 "GND" H 1205 3727 50  0000 C CNN
-F 2 "" H 1200 3900 50  0001 C CNN
-F 3 "" H 1200 3900 50  0001 C CNN
-	1    1200 3900
+P 1200 4900
+F 0 "#PWR?" H 1200 4650 50  0001 C CNN
+F 1 "GND" H 1205 4727 50  0000 C CNN
+F 2 "" H 1200 4900 50  0001 C CNN
+F 3 "" H 1200 4900 50  0001 C CNN
+	1    1200 4900
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	1200 3900 1200 3500
+	1200 4900 1200 4500
 Wire Wire Line
 	3600 2350 3600 2200
 NoConn ~ 4000 1550
 NoConn ~ 4000 1650
 NoConn ~ 4000 1750
 NoConn ~ 4000 1950
-NoConn ~ 1600 3100
-NoConn ~ 1300 1900
+NoConn ~ 1600 4100
+NoConn ~ 1300 2900
 $Comp
 L Device:Fuse F1
 U 1 1 640E18FC
@@ -716,7 +688,6 @@ Wire Wire Line
 Connection ~ 3600 2200
 Wire Wire Line
 	3600 2200 3600 2150
-NoConn ~ 3200 1050
 Connection ~ 5250 1050
 Wire Wire Line
 	6950 1850 7500 1850
@@ -776,13 +747,44 @@ $EndComp
 Wire Wire Line
 	7500 6300 7500 6200
 Wire Wire Line
-	4650 2650 4650 2700
+	4650 3700 1600 3700
 Wire Wire Line
-	4650 2700 1600 2700
-Wire Wire Line
-	4550 1650 4550 2600
-Wire Wire Line
-	4550 2600 1600 2600
+	4550 3600 1600 3600
 Wire Wire Line
 	4550 1650 6050 1650
+Wire Wire Line
+	3000 750  3000 1650
+Wire Wire Line
+	3000 1650 3200 1650
+Connection ~ 3000 750 
+Wire Wire Line
+	3000 750  3600 750 
+Wire Wire Line
+	1850 1050 3200 1050
+Wire Wire Line
+	4550 4000 4550 6000
+Wire Wire Line
+	1600 3800 6050 3800
+Wire Wire Line
+	4650 2650 4650 3700
+Wire Wire Line
+	4550 1650 4550 3600
+Wire Wire Line
+	4650 4850 4650 3900
+Wire Wire Line
+	1600 4000 4550 4000
+Wire Wire Line
+	1600 3900 4650 3900
+Wire Wire Line
+	4650 4850 6050 4850
+Wire Wire Line
+	4550 6000 6050 6000
+Wire Wire Line
+	1850 1050 1850 3500
+Wire Wire Line
+	1750 1350 1750 3400
+Wire Wire Line
+	1650 1250 1650 3300
+Wire Wire Line
+	1100 750  1100 2900
 $EndSCHEMATC
