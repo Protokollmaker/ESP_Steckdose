@@ -52,9 +52,40 @@ const char index_html[] PROGMEM = R"rawliteral(
 <head>
   <title>ESP Web Server</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ESP Web Server</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" href="data:,">
+  <title>ESP Web Server</title>
+  <script>
+    var gateway = `ws://${window.location.hostname}/ws`;
+    //var gateway = "ws://192.168.178.123/ws"
+    webSocket = new WebSocket(gateway, "protocolOne");
+    webSocket.onopen = function(event) {};
+    webSocket.onmessage = function(event) {
+      let data = JSON.parse(event.data);
+      console.log("data: ", data);
+      switch (data.eventtype) {
+      case "Tick":
+        const timers = document.getElementsByClassName("tick");
+        for (let i = 0; i < timers.length; i++) {
+          if (timers[i].innerHTML > 0)
+            timers[i].innerHTML = parseInt(timers[i].innerHTML) - 1;
+        }
+        return;
+      case "setRelayState":
+        document.getElementById("state".concat(data.relay)).innerHTML = data.state ? "ON":"OFF";
+        return;
+      case "setTimer":
+        document.getElementById("timer".concat(data.timerID)).innerHTML = data.time;
+        return;
+      }
+    }
+
+    function ToggleRelay(relay, relayClass){
+      webSocket.send(JSON.stringify({
+                  eventtype: "setRelayState",
+                  relay: relay,
+                  state: document.getElementById(relayClass).innerHTML == "ON" ? 0 : 1
+                  }));
+    }
+  </script>
 </head>
 <body>
   <div class="topnav">
@@ -63,33 +94,33 @@ const char index_html[] PROGMEM = R"rawliteral(
   <div class="content">
     <div class="card">
       <h2>Relais 0</h2>
-      <p class="state">state: <span id="state">%Timer0%</span></p>
-      <p class="state">state: <span id="state">%STATE0%</span></p>
-      <p><button id="button" class="button">Toggle</button></p>
+      <p class="timer">time: <span id="timer0" class="tick">%Timer0%</span></p>
+      <p class="state">state: <span id="state0">%STATE0%</span></p>
+      <p><button id="toggle0" onclick="ToggleRelay(0,'state0')" class="button">Toggle</button></p>
     </div>
     <div class="card">
       <h2>Relais 1</h2>
-      <p class="state">state: <span id="state">%Timer1%</span></p>
-      <p class="state">state: <span id="state">%STATE1%</span></p>
-      <p><button id="button" class="button">Toggle</button></p>
+      <p class="timer">time: <span id="timer1" class="tick">%Timer1%</span></p>
+      <p class="state">state: <span id="state1">%STATE1%</span></p>
+      <p><button id="toggle1" onclick="ToggleRelay(1,'state1')" class="button">Toggle</button></p>
     </div>
     <div class="card">
       <h2>Relais 2</h2>
-      <p class="state">state: <span id="state">%Timer2%</span></p>
-      <p class="state">state: <span id="state">%STATE2%</span></p>
-      <p><button id="button" class="button">Toggle</button></p>
+      <p class="timer">time: <span id="timer2" class="tick">%Timer2%</span></p>
+      <p class="state">state: <span id="state2">%STATE2%</span></p>
+      <p><button id="toggle2" onclick="ToggleRelay(2,'state2')" class="button">Toggle</button></p>
     </div>
     <div class="card">
       <h2>Relais 3</h2>
-      <p class="state">state: <span id="state">%Timer3%</span></p>
-      <p class="state">state: <span id="state">%STATE3%</span></p>
-      <p><button id="button" class="button">Toggle</button></p>
+      <p class="timer">time: <span id="timer3" class="tick">%Timer3%</span></p>
+      <p class="state">state: <span id="state3">%STATE3%</span></p>
+      <p><button id="toggle3" onclick="ToggleRelay(3,'state3')" class="button">Toggle</button></p>
     </div>
     <div class="card">
       <h2>Relais 4</h2>
-      <p class="state">state: <span id="state">%Timer4%</span></p>
-      <p class="state">state: <span id="state">%STATE4%</span></p>
-      <p><button id="button" class="button">Toggle</button></p>
+      <p class="timer">time: <span id="timer4" class="tick">%Timer4%</span></p>
+      <p class="state">state: <span id="state4">%STATE4%</span></p>
+      <p><button id="toggle4" onclick="ToggleRelay(4,'state4')" class="button">Toggle</button></p>
     </div>
   </div>
 </body>
@@ -165,7 +196,6 @@ void initWebSocket() {
 }
 
 String processor(const String& var){
-  Serial.println(var);
   if(var == "STATE0"){
     if (getRelayState(0)){
       return "ON";
@@ -294,6 +324,6 @@ void loop() {
     digitalWrite(blink_pins[i],timerState);
     timer[i] = timer[i] -1;
   }
-  ws.textAll("Tick");
+  ws.textAll("{\"eventtype\":\"Tick\"}");
   delay(1000);
 }
