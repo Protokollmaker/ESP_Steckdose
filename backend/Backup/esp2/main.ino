@@ -158,7 +158,14 @@ void setup(){
     }
     Serial.println("[Wifi] IP address: ");
     Serial.println(WiFi.localIP());
+    
+    pinMode(SHIFT_OUT, OUTPUT);
+    pinMode(SHIFT_SHIFT, OUTPUT);
+    pinMode(SHIFT_OUTPUT_ENABLE, OUTPUT);
 
+    for (int i = 0; i < NUMBER_OF_RELAY; i++){
+        pinMode(blink_pins[i], OUTPUT);
+    }
 
     // Route for root / web page
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){

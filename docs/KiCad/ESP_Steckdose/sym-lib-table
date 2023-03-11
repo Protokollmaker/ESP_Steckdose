@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "ESP_Steckdose-rescue")(type "KiCad")(uri "${KIPRJMOD}/ESP_Steckdose-rescue.kicad_sym")(options "")(descr ""))
+)
