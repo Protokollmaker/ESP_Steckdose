@@ -127,7 +127,7 @@ h1 {
     height: 70px;
     width: 200px;
 }
-h3 {
+h4 {
     margin-top: 5px;
     margin-bottom: 5px;
 }
@@ -215,4 +215,14 @@ input {
 .time span {
     display: table-cell;
     text-align: center;
+}
+
+input {
+    background-color: #ffffff00;
+    border: none;
+    text-align: right; 
+    font-size: 25px;
+}
+*{
+    font-family:Sans-serif;
 }

@@ -4,7 +4,8 @@ webSocket = new WebSocket(gateway, "protocolOne");
 webSocket.onopen = function(event) {};
 webSocket.onmessage = function(event) {
   let data = JSON.parse(event.data);
-  console.log("data: ", data);
+  if (data.eventtype !=  "Tick")
+    console.log("data: ", data);
   switch (data.eventtype) {
   case "Tick":
     const timers = document.getElementsByClassName("tick");
