@@ -3,16 +3,22 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include "password.h"
-#include "Ticker.h"
 #include <ArduinoJson.h>
 
 // Replace with your network credentials
 const char* ssid = SSID_WLAN;
 const char* password = PASSWORD_WLAN;
-
-#define TIMER_NUMBER 5
 #define RELAY_NUMBER 5
+#define TIMER_NUMBER RELAY_NUMBER
+#define BLINK_LEDS {0,2,14,12,13}
+#define SHIFT_OUT 16           // GPIO DO
+#define SHIFT_SHIFT 5          // GPIO D1
+#define SHIFT_OUTPUT_ENABLE 4  //GPIO D2
+
+//int timerRelay[TIMER_NUMBER];
 int timer[TIMER_NUMBER];
+bool timerTurn[TIMER_NUMBER];
+bool timerRun[TIMER_NUMBER];
 
 bool ledState = 0;
 const int ledPin = 2;
@@ -20,10 +26,7 @@ const int ledPin = 2;
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
-#define BLINK_LEDS {0,2,14,12,13}
-#define SHIFT_OUT 16           // GPIO DO
-#define SHIFT_SHIFT 5          // GPIO D1
-#define SHIFT_OUTPUT_ENABLE 4  //GPIO D2
+
 
 int relayState = 0b0;
 bool timerState = 0;
@@ -160,15 +163,19 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       {
         timer[doc["timerID"].as<int>()] = doc["time"].as<int>();
       }
+      timerRun[doc["timerID"].as<int>()] = doc["state"].as<bool>();
+      timerTurn[doc["timerID"].as<int>()] = doc["turn"].as<bool>();
+      //timerRelay[doc["timerID"].as<int>()] = doc["relay"].as<int>();
     }
     if (!strcmp(eventtype, "setRelayState")){
       setRelayState(doc["relay"].as<int>(), doc["state"].as<bool>());
     }
-    /*if (strcmp((char*)data, "toggle") == 0) {
-      ledState = !ledState;
-      digitalWrite(ledPin, ledState);
-      notifyClients();
-    }*/
+    if (!strcmp(eventtype, "turnTimer")){
+      timerTurn[doc["timerID"].as<int>()] = doc["turn"].as<bool>();
+    }
+    if (!strcmp(eventtype, "stopTimer")){
+      timerRun[doc["timerID"].as<int>()] = doc["state"].as<bool>();
+    }
   }
 }
 
@@ -300,21 +307,19 @@ void loop() {
   timerState = !timerState;
   ws.cleanupClients();
   for (int i = 0; i < TIMER_NUMBER; i++){
-    if (timer[i] == -1){
-      continue;
-    }
+    if (timer[i] == -1){continue;}
+    if (!timerRun[i])  {continue;}
     if (timer[i] == 0)  {
       StaticJsonDocument<96> doc;
-
       doc["eventtype"] = "setRelayState";
       doc["relay"] = i;
-      doc["state"] = false;
+      doc["state"] = timerTurn[i];
       String output;
       serializeJson(doc, output);
       ws.textAll(output);
       digitalWrite(blink_pins[i],0);
       timer[i] = timer[i] -1;
-      setRelayState(i, false);
+      setRelayState(i, timerTurn[i]);
       return;
     }
     Serial.print("Timer: ");
