@@ -1,5 +1,5 @@
-//var gateway = `ws://${window.location.hostname}/ws`;
-var gateway = "ws://192.168.178.123/ws"
+var gateway = `ws://${window.location.hostname}/ws`;
+//var gateway = "ws://192.168.178.123/ws"
 webSocket = new WebSocket(gateway, "protocolOne");
 webSocket.onopen = function(event) {};
 webSocket.onmessage = function(event) {
