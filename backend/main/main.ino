@@ -4,6 +4,9 @@
 #include <ESPAsyncWebServer.h>
 #include "password.h"
 #include <ArduinoJson.h>
+#include "LittleFS.h"
+#include <ESP8266HTTPClient.h>
+#include <WiFiClientSecureBearSSL.h>
 
 // Replace with your network credentials
 const char* ssid = SSID_WLAN;
@@ -15,14 +18,15 @@ const char* password = PASSWORD_WLAN;
 #define SHIFT_SHIFT 5          // GPIO D1
 #define SHIFT_OUTPUT_ENABLE 4  //GPIO D2
 
-#define URL_INDEX_HTML  "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/index.html"
+#define URL_INDEX_HTML1  "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/half1index.html"
+#define URL_INDEX_HTML2  "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/half2index.html"
 #define URL_INDEX_CSS   "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/layout.css"
 #define URL_INDEX_JS    "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/layout.js"
 #define FILE_INDEX_HTML "/index.html"
 #define FILE_INDEX_CSS  "/style.css"
 #define FILE_INDEX_JS   "/index.js"
 
-#define LOG_DOWNLADE(URL, FILE) Serial.print("[Downlade File] start Downladeing html"); \
+#define LOG_DOWNLADE(URL, FILE) Serial.print("[Downlade File] start Downladeing html "); \
                                 Serial.print(FILE); \
                                 Serial.print(" from "); \
                                 Serial.println(URL);
@@ -109,6 +113,43 @@ bool downloadToFile(const char* filename, const char* fileURL){
     return 0;
 }
 
+bool appendToFile(const char* filename, const char* fileURL){
+    std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
+    client->setInsecure();
+    HTTPClient https;
+    Serial.print("[HTTPS] begin...\n");
+    if (!https.begin(*client, fileURL)) {
+        Serial.printf("[HTTPS] Unable to connect\n");
+        return 1;
+    }
+    Serial.print("[HTTPS] GET...\n");
+    int httpCode = https.GET();
+    if (!(httpCode > 0)) {
+        Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
+        return 1;
+    }
+    // HTTP header has been send and Server response header has been handled
+    Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
+
+    // file found at server
+    if (!(httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)) {
+        Serial.printf("[HTTPS] error \n");
+        return 1;
+    }
+    String payload = https.getString();
+    File file = LittleFS.open(filename, "a");
+    if (!file) {
+        Serial.println("[LittleFS] Failed to open file for writing");
+        return 1;
+    }
+
+    auto bytesWritten = file.write(payload.c_str(), payload.length());
+    Serial.printf("[LittleFS] bytesWritten: %d\n", bytesWritten);
+    Serial.printf("should be %d\n", payload.length());
+    file.close();
+    return 0;
+}
+
 void printMessage(){
     Serial.printf("test");
 }
@@ -154,6 +195,22 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     }
     if (!strcmp(eventtype, "stopTimer")){
       timerRun[doc["timerID"].as<int>()] = doc["state"].as<bool>();
+    }
+    if   (!strcmp(eventtype, "UpdateFrontend")) {
+        if (!strcmp(doc["file"], FILE_INDEX_HTML)) {
+            deleteFile(FILE_INDEX_HTML);
+        }
+        if (!strcmp(doc["file"], FILE_INDEX_CSS)) {
+            deleteFile(FILE_INDEX_CSS);
+        }
+        if (!strcmp(doc["file"], FILE_INDEX_JS)) {
+            deleteFile(FILE_INDEX_JS);
+        }
+        return;
+    }
+    if (!strcmp(eventtype, "restat")) {
+      ESP.restart();
+      return;
     }
   }
 }
@@ -202,37 +259,23 @@ String processor(const String& var){
     if (getRelayState(4)){return "ON";}
     else{return "OFF";}
   }
-  if (var == "Timer0"){
-    return String(timer[0]);
-  }
-  if (var == "Timer1"){
-    return String(timer[1]);
-  }
-  if (var == "Timer2"){
-    return String(timer[2]);
-  }
-  if (var == "Timer3"){
-    return String(timer[3]);
-  }
-  if (var == "Timer4"){
-    return String(timer[4]);
-  }
-  if (var == "Run0"){timerRun[0]}
-  if (var == "Run1"){timerRun[1]}
-  if (var == "Run2"){timerRun[2]}
-  if (var == "Run3"){timerRun[3]}
-  if (var == "Run4"){timerRun[4]}
-  if (var == "TimerTurn0") {timerTurn[0]}
-  if (var == "TimerTurn1") {timerTurn[1]}
-  if (var == "TimerTurn2") {timerTurn[2]}
-  if (var == "TimerTurn3") {timerTurn[3]}
-  if (var == "TimerTurn4") {timerTurn[4]}
+  if (var == "Timer0")      {return String(timer[0]);}
+  if (var == "Timer1")      {return String(timer[1]);}
+  if (var == "Timer2")      {return String(timer[2]);}
+  if (var == "Timer3")      {return String(timer[3]);}
+  if (var == "Timer4")      {return String(timer[4]);}
+  if (var == "Run0")        {return String(timerRun[0]);}
+  if (var == "Run1")        {return String(timerRun[1]);}
+  if (var == "Run2")        {return String(timerRun[2]);}
+  if (var == "Run3")        {return String(timerRun[3]);}
+  if (var == "Run4")        {return String(timerRun[4]);}
+  if (var == "TimerTurn0")  {return String(timerTurn[0]);}
+  if (var == "TimerTurn1")  {return String(timerTurn[1]);}
+  if (var == "TimerTurn2")  {return String(timerTurn[2]);}
+  if (var == "TimerTurn3")  {return String(timerTurn[3]);}
+  if (var == "TimerTurn4")  {return String(timerTurn[4]);}
   return String();
 }
-
-/*String processor1(const String& var){
-  return "02139"
-}*/
 
 void setup(){
   // Serial port for debugging purposes
@@ -268,13 +311,11 @@ void setup(){
       pinMode(blink_pins[i], OUTPUT);
   }
   // Route for root / web page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    //request->send_P(200, "text/html", index_html, processor);
-
-  });
   if (!LittleFS.exists(FILE_INDEX_HTML)) {
-      LOG_DOWNLADE(FILE_INDEX_HTML, URL_INDEX_HTML);
-      downloadToFile(FILE_INDEX_HTML, URL_INDEX_HTML);
+      LOG_DOWNLADE(FILE_INDEX_HTML, URL_INDEX_HTML1);
+      downloadToFile(FILE_INDEX_HTML, URL_INDEX_HTML1);
+      LOG_DOWNLADE(FILE_INDEX_HTML, URL_INDEX_HTML2);
+      appendToFile(FILE_INDEX_HTML, URL_INDEX_HTML2);
   }
   if (!LittleFS.exists(FILE_INDEX_CSS)) {
       LOG_DOWNLADE(FILE_INDEX_CSS, URL_INDEX_CSS);
@@ -285,7 +326,8 @@ void setup(){
       downloadToFile(FILE_INDEX_JS, URL_INDEX_JS);
   }
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){ 
-      request->send(LittleFS, FILE_INDEX_HTML, "text/html"); 
+      //request->send(LittleFS, FILE_INDEX_HTML, "text/html");
+      request->send(LittleFS, FILE_INDEX_HTML, "text/html", false, processor); 
   });
   server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){ 
       request->send(LittleFS, FILE_INDEX_CSS, "text/css"); 
