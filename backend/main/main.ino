@@ -15,6 +15,18 @@ const char* password = PASSWORD_WLAN;
 #define SHIFT_SHIFT 5          // GPIO D1
 #define SHIFT_OUTPUT_ENABLE 4  //GPIO D2
 
+#define URL_INDEX_HTML  "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/index.html"
+#define URL_INDEX_CSS   "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/layout.css"
+#define URL_INDEX_JS    "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/layout.js"
+#define FILE_INDEX_HTML "/index.html"
+#define FILE_INDEX_CSS  "/style.css"
+#define FILE_INDEX_JS   "/index.js"
+
+#define LOG_DOWNLADE(URL, FILE) Serial.print("[Downlade File] start Downladeing html"); \
+                                Serial.print(FILE); \
+                                Serial.print(" from "); \
+                                Serial.println(URL);
+
 //int timerRelay[TIMER_NUMBER];
 int timer[TIMER_NUMBER];
 bool timerTurn[TIMER_NUMBER];
@@ -50,85 +62,52 @@ void shiftoutData() {
     digitalWrite(SHIFT_OUTPUT_ENABLE, HIGH);
 }
 
-const char index_html[] PROGMEM = R"rawliteral(
-<!DOCTYPE HTML><html>
-<head>
-  <title>ESP Web Server</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ESP Web Server</title>
-  <script>
-    var gateway = `ws://${window.location.hostname}/ws`;
-    //var gateway = "ws://192.168.178.123/ws"
-    webSocket = new WebSocket(gateway, "protocolOne");
-    webSocket.onopen = function(event) {};
-    webSocket.onmessage = function(event) {
-      let data = JSON.parse(event.data);
-      console.log("data: ", data);
-      switch (data.eventtype) {
-      case "Tick":
-        const timers = document.getElementsByClassName("tick");
-        for (let i = 0; i < timers.length; i++) {
-          if (timers[i].innerHTML > 0)
-            timers[i].innerHTML = parseInt(timers[i].innerHTML) - 1;
-        }
-        return;
-      case "setRelayState":
-        document.getElementById("state".concat(data.relay)).innerHTML = data.state ? "ON":"OFF";
-        return;
-      case "setTimer":
-        document.getElementById("timer".concat(data.timerID)).innerHTML = data.time;
-        return;
-      }
+bool deleteFile(const char* filename) {
+    Serial.printf("[LittleFS] delete file");
+    Serial.println(filename);
+    if (!LittleFS.remove(filename)) {
+        Serial.println("[LittleFS]Failed to delete file");
+        return 1;
+    }
+    return 0;
+}
+
+bool downloadToFile(const char* filename, const char* fileURL){
+    std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
+    client->setInsecure();
+    HTTPClient https;
+    Serial.print("[HTTPS] begin...\n");
+    if (!https.begin(*client, fileURL)) {
+        Serial.printf("[HTTPS] Unable to connect\n");
+        return 1;
+    }
+    Serial.print("[HTTPS] GET...\n");
+    int httpCode = https.GET();
+    if (!(httpCode > 0)) {
+        Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
+        return 1;
+    }
+    // HTTP header has been send and Server response header has been handled
+    Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
+
+    // file found at server
+    if (!(httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)) {
+        Serial.printf("[HTTPS] error \n");
+        return 1;
+    }
+    String payload = https.getString();
+    File file = LittleFS.open(filename, "w");
+    if (!file) {
+        Serial.println("[LittleFS] Failed to open file for writing");
+        return 1;
     }
 
-    function ToggleRelay(relay, relayClass){
-      webSocket.send(JSON.stringify({
-                  eventtype: "setRelayState",
-                  relay: relay,
-                  state: document.getElementById(relayClass).innerHTML == "ON" ? 0 : 1
-                  }));
-    }
-  </script>
-</head>
-<body>
-  <div class="topnav">
-    <h1>ESP WebSocket Server</h1>
-  </div>
-  <div class="content">
-    <div class="card">
-      <h2>Relais 0</h2>
-      <p class="timer">time: <span id="timer0" class="tick">%Timer0%</span></p>
-      <p class="state">state: <span id="state0">%STATE0%</span></p>
-      <p><button id="toggle0" onclick="ToggleRelay(0,'state0')" class="button">Toggle</button></p>
-    </div>
-    <div class="card">
-      <h2>Relais 1</h2>
-      <p class="timer">time: <span id="timer1" class="tick">%Timer1%</span></p>
-      <p class="state">state: <span id="state1">%STATE1%</span></p>
-      <p><button id="toggle1" onclick="ToggleRelay(1,'state1')" class="button">Toggle</button></p>
-    </div>
-    <div class="card">
-      <h2>Relais 2</h2>
-      <p class="timer">time: <span id="timer2" class="tick">%Timer2%</span></p>
-      <p class="state">state: <span id="state2">%STATE2%</span></p>
-      <p><button id="toggle2" onclick="ToggleRelay(2,'state2')" class="button">Toggle</button></p>
-    </div>
-    <div class="card">
-      <h2>Relais 3</h2>
-      <p class="timer">time: <span id="timer3" class="tick">%Timer3%</span></p>
-      <p class="state">state: <span id="state3">%STATE3%</span></p>
-      <p><button id="toggle3" onclick="ToggleRelay(3,'state3')" class="button">Toggle</button></p>
-    </div>
-    <div class="card">
-      <h2>Relais 4</h2>
-      <p class="timer">time: <span id="timer4" class="tick">%Timer4%</span></p>
-      <p class="state">state: <span id="state4">%STATE4%</span></p>
-      <p><button id="toggle4" onclick="ToggleRelay(4,'state4')" class="button">Toggle</button></p>
-    </div>
-  </div>
-</body>
-</html>
-)rawliteral";
+    auto bytesWritten = file.write(payload.c_str(), payload.length());
+    Serial.printf("[LittleFS] bytesWritten: %d\n", bytesWritten);
+    Serial.printf("should be %d\n", payload.length());
+    file.close();
+    return 0;
+}
 
 void printMessage(){
     Serial.printf("test");
@@ -204,44 +183,24 @@ void initWebSocket() {
 
 String processor(const String& var){
   if(var == "STATE0"){
-    if (getRelayState(0)){
-      return "ON";
-    }
-    else{
-      return "OFF";
-    }
+    if (getRelayState(0)){return "ON";}
+    else{return "OFF";}
   }
   if(var == "STATE1"){
-    if (getRelayState(1)){
-      return "ON";
-    }
-    else{
-      return "OFF";
-    }
+    if (getRelayState(1)){return "ON";}
+    else{return "OFF";}
   }
   if(var == "STATE2"){
-    if (getRelayState(2)){
-      return "ON";
-    }
-    else{
-      return "OFF";
-    }
+    if (getRelayState(2)){return "ON";}
+    else{return "OFF";}
   }
   if(var == "STATE3"){
-    if (getRelayState(3)){
-      return "ON";
-    }
-    else{
-      return "OFF";
-    }
+    if (getRelayState(3)){return "ON";}
+    else{return "OFF";}
   }
   if(var == "STATE4"){
-    if (getRelayState(4)){
-      return "ON";
-    }
-    else{
-      return "OFF";
-    }
+    if (getRelayState(4)){return "ON";}
+    else{return "OFF";}
   }
   if (var == "Timer0"){
     return String(timer[0]);
@@ -258,6 +217,16 @@ String processor(const String& var){
   if (var == "Timer4"){
     return String(timer[4]);
   }
+  if (var == "Run0"){timerRun[0]}
+  if (var == "Run1"){timerRun[1]}
+  if (var == "Run2"){timerRun[2]}
+  if (var == "Run3"){timerRun[3]}
+  if (var == "Run4"){timerRun[4]}
+  if (var == "TimerTurn0") {timerTurn[0]}
+  if (var == "TimerTurn1") {timerTurn[1]}
+  if (var == "TimerTurn2") {timerTurn[2]}
+  if (var == "TimerTurn3") {timerTurn[3]}
+  if (var == "TimerTurn4") {timerTurn[4]}
   return String();
 }
 
@@ -285,7 +254,11 @@ void setup(){
 
   // Print ESP Local IP Address
   Serial.println(WiFi.localIP());
-
+  Serial.println("\n[LittleFS] TRY to open filesystem");
+  if(!LittleFS.begin()){
+      Serial.println("[LittleFS] An Error has occurred while mounting LittleFS");
+      return;
+  }
   initWebSocket();
   pinMode(SHIFT_OUT, OUTPUT);
   pinMode(SHIFT_SHIFT, OUTPUT);
@@ -296,9 +269,30 @@ void setup(){
   }
   // Route for root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/html", index_html, processor);
-  });
+    //request->send_P(200, "text/html", index_html, processor);
 
+  });
+  if (!LittleFS.exists(FILE_INDEX_HTML)) {
+      LOG_DOWNLADE(FILE_INDEX_HTML, URL_INDEX_HTML);
+      downloadToFile(FILE_INDEX_HTML, URL_INDEX_HTML);
+  }
+  if (!LittleFS.exists(FILE_INDEX_CSS)) {
+      LOG_DOWNLADE(FILE_INDEX_CSS, URL_INDEX_CSS);
+      downloadToFile(FILE_INDEX_CSS, URL_INDEX_CSS);
+  }
+  if (!LittleFS.exists(FILE_INDEX_JS)) {
+      LOG_DOWNLADE(FILE_INDEX_JS, URL_INDEX_JS);
+      downloadToFile(FILE_INDEX_JS, URL_INDEX_JS);
+  }
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){ 
+      request->send(LittleFS, FILE_INDEX_HTML, "text/html"); 
+  });
+  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){ 
+      request->send(LittleFS, FILE_INDEX_CSS, "text/css"); 
+  });
+  server.on("/index.js", HTTP_GET, [](AsyncWebServerRequest *request){ 
+      request->send(LittleFS, FILE_INDEX_JS, "text/js"); 
+  });
   // Start server
   server.begin();
 }
