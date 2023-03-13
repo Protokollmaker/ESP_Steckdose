@@ -277,6 +277,7 @@ void setup(){
   Serial.begin(115200);
   for (int i = 0; i < TIMER_NUMBER; i++){
     timer[i] = -1;
+    timerRun[i] = 1;
   }
 
   pinMode(ledPin, OUTPUT);
