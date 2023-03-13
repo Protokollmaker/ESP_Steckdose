@@ -240,40 +240,35 @@ void initWebSocket() {
 
 String processor(const String& var){
   if(var == "STATE0"){
-    if (getRelayState(0)){return "ON";}
-    else{return "OFF";}
+    return String(getRelayState(0) ? "ON" : "OFF");
   }
   if(var == "STATE1"){
-    if (getRelayState(1)){return "ON";}
-    else{return "OFF";}
+    return String(getRelayState(1) ? "ON" : "OFF");
   }
   if(var == "STATE2"){
-    if (getRelayState(2)){return "ON";}
-    else{return "OFF";}
+    return String(getRelayState(2) ? "ON" : "OFF");
   }
   if(var == "STATE3"){
-    if (getRelayState(3)){return "ON";}
-    else{return "OFF";}
+    return String(getRelayState(3) ? "ON" : "OFF");
   }
   if(var == "STATE4"){
-    if (getRelayState(4)){return "ON";}
-    else{return "OFF";}
+    return String(getRelayState(4) ? "ON" : "OFF");
   }
   if (var == "Timer0")      {return String(timer[0]);}
   if (var == "Timer1")      {return String(timer[1]);}
   if (var == "Timer2")      {return String(timer[2]);}
   if (var == "Timer3")      {return String(timer[3]);}
   if (var == "Timer4")      {return String(timer[4]);}
-  if (var == "Run0")        {return String(timerRun[0]);}
-  if (var == "Run1")        {return String(timerRun[1]);}
-  if (var == "Run2")        {return String(timerRun[2]);}
-  if (var == "Run3")        {return String(timerRun[3]);}
-  if (var == "Run4")        {return String(timerRun[4]);}
-  if (var == "TimerTurn0")  {return String(timerTurn[0]);}
-  if (var == "TimerTurn1")  {return String(timerTurn[1]);}
-  if (var == "TimerTurn2")  {return String(timerTurn[2]);}
-  if (var == "TimerTurn3")  {return String(timerTurn[3]);}
-  if (var == "TimerTurn4")  {return String(timerTurn[4]);}
+  if (var == "Run0")        {return String(timerRun[0]? "true": "false");}
+  if (var == "Run1")        {return String(timerRun[1]? "true": "false");}
+  if (var == "Run2")        {return String(timerRun[2]? "true": "false");}
+  if (var == "Run3")        {return String(timerRun[3]? "true": "false");}
+  if (var == "Run4")        {return String(timerRun[4]? "true": "false");}
+  if (var == "TimerTurn0")  {return String(timerTurn[0]? "true": "false");}
+  if (var == "TimerTurn1")  {return String(timerTurn[1]? "true": "false");}
+  if (var == "TimerTurn2")  {return String(timerTurn[2]? "true": "false");}
+  if (var == "TimerTurn3")  {return String(timerTurn[3]? "true": "false");}
+  if (var == "TimerTurn4")  {return String(timerTurn[4]? "true": "false");}
   return String();
 }
 

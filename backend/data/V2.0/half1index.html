@@ -7,68 +7,68 @@
   <script src="index.js"></script> 
 </head>
 <body>
-  <div class="topnav">
-    <h1>ESP WebSocket Server</h1>
-  </div>
-  <div class="content">
-    <div class="card tick" id="timer0" data-time="%Timer0%" data-timerrun="%Run0%" data-timerstate="%TimerTurn0%" data-edit=false data-editrun="true" data-editturn="false">
-        <button class="socket" id="state0" data-state="%STATE0%" onclick="ToggleRelay(0,'state0')">
-            <div class="steckdose-Main">
-                <div class="round">
-                    <div class="round1">
-                        <div class="topPE"></div>
-                        <div class="contact1"></div>
-                        <div class="contact2"></div>
-                        <div class="bottomPE"></div>
-                    </div>
-                </div>
-            </div>
-        </button>
-        <div class="controles">
-        <div class="end_edit" onclick="edit(false, 'timer0')">↩</div>
-        <h4>Timer für <button class="timeTurn" onclick="timerturn(0,'timer0')"></button></h4>
-            <div class="time">
-                <span onclick="edit(true, 'timer0')"><input type="text" class="h" placeholder="0">h</span>
-                <span onclick="edit(true, 'timer0')"><input type="text" class="min" placeholder="0">min</span>
-                <span onclick="edit(true, 'timer0')"><input type="text" class="s" placeholder="0">s</span>
-            </div>
-        </div>
-        <div class="controles1">
-            <button class="but timerSend" onclick="send(0,'timer0')">Send</button></br>
-            <button class="but timerRun" onclick="stopTimer(0,'timer0')">Run</button>
-        </div>
+    <div class="topnav">
+      <h1>ESP WebSocket Server</h1>
     </div>
-    <div class="card tick" id="timer1" data-time="%Timer1%" data-timerrun="%Run1%" data-timerstate="%TimerTurn1%" data-edit=false data-editrun="true" data-editturn="false">
-        <button class="socket" id="state1" data-state="%STATE1%" onclick="ToggleRelay(1,'state1')">
-            <div class="steckdose-Main">
-                <div class="round">
-                    <div class="round1">
-                        <div class="topPE"></div>
-                        <div class="contact1"></div>
-                        <div class="contact2"></div>
-                        <div class="bottomPE"></div>
-                    </div>
-                </div>
-            </div>
-        </button>
-        <div class="controles">
-        <div class="end_edit" onclick="edit(false, 'timer1')">↩</div>
-        <h4>Timer für <button class="timeTurn" onclick="timerturn(1,'timer1')"></button></h4>
-            <div class="time">
-                <span onclick="edit(true, 'timer1')"><input type="text" class="h" placeholder="0">h</span>
-                <span onclick="edit(true, 'timer1')"><input type="text" class="min" placeholder="0">min</span>
-                <span onclick="edit(true, 'timer1')"><input type="text" class="s" placeholder="0">s</span>
-            </div>
-        </div>
-        <div class="controles1">
-            <button class="but timerSend" onclick="send(1,'timer1')">Send</button></br>
-            <button class="but timerRun" onclick="stopTimer(1,'timer1')">Run</button>
-        </div>
-    </div>
-    <div class="card tick" id="timer2" data-time="%Timer2%" data-timerrun="%Run2%" data-timerstate="%TimerTurn2%" data-edit=false data-editrun="true" data-editturn="false">
-        <button class="socket" id="state2" data-state="%STATE2%" onclick="ToggleRelay(2,'state2')">
-            <div class="steckdose-Main">
-                <div class="round">
-                    <div class="round1">
-                        <div class="topPE"></div>
-                        <div class="contact1"></div>
+    <div class="content">
+      <div class="card tick" id="timer0" data-time="%Timer0%" data-timerrun="%Run0%" data-timerstate="%TimerTurn0%" data-edit=false data-editrun="true" data-editturn="false">
+          <button class="socket" id="state0" data-state="%STATE0%" onclick="ToggleRelay(0,'state0')">
+              <div class="steckdose-Main">
+                  <div class="round">
+                      <div class="round1">
+                          <div class="topPE"></div>
+                          <div class="contact1"></div>
+                          <div class="contact2"></div>
+                          <div class="bottomPE"></div>
+                      </div>
+                  </div>
+              </div>
+          </button>
+          <div class="controles">
+          <div class="end_edit" onclick="edit(false, 'timer0')">↩</div>
+          <h4>Timer für <button class="timeTurn" onclick="timerturn(0,'timer0')"></button></h4>
+              <div class="time">
+                  <span onclick="edit(true, 'timer0')"><input type="text" class="h" placeholder="0">h</span>
+                  <span onclick="edit(true, 'timer0')"><input type="text" class="min" placeholder="0">min</span>
+                  <span onclick="edit(true, 'timer0')"><input type="text" class="s" placeholder="0">s</span>
+              </div>
+          </div>
+          <div class="controles1">
+              <button class="but timerSend" onclick="send(0,'timer0')">Send</button></br>
+              <button class="but timerRun" onclick="stopTimer(0,'timer0')">Run</button>
+          </div>
+      </div>
+      <div class="card tick" id="timer1" data-time="%Timer1%" data-timerrun="%Run1%" data-timerstate="%TimerTurn1%" data-edit=false data-editrun="true" data-editturn="false">
+          <button class="socket" id="state1" data-state="%STATE1%" onclick="ToggleRelay(1,'state1')">
+              <div class="steckdose-Main">
+                  <div class="round">
+                      <div class="round1">
+                          <div class="topPE"></div>
+                          <div class="contact1"></div>
+                          <div class="contact2"></div>
+                          <div class="bottomPE"></div>
+                      </div>
+                  </div>
+              </div>
+          </button>
+          <div class="controles">
+          <div class="end_edit" onclick="edit(false, 'timer1')">↩</div>
+          <h4>Timer für <button class="timeTurn" onclick="timerturn(1,'timer1')"></button></h4>
+              <div class="time">
+                  <span onclick="edit(true, 'timer1')"><input type="text" class="h" placeholder="0">h</span>
+                  <span onclick="edit(true, 'timer1')"><input type="text" class="min" placeholder="0">min</span>
+                  <span onclick="edit(true, 'timer1')"><input type="text" class="s" placeholder="0">s</span>
+              </div>
+          </div>
+          <div class="controles1">
+              <button class="but timerSend" onclick="send(1,'timer1')">Send</button></br>
+              <button class="but timerRun" onclick="stopTimer(1,'timer1')">Run</button>
+          </div>
+      </div>
+      <div class="card tick" id="timer2" data-time="%Timer2%" data-timerrun="%Run2%" data-timerstate="%TimerTurn2%" data-edit=false data-editrun="true" data-editturn="false">
+          <button class="socket" id="state2" data-state="%STATE2%" onclick="ToggleRelay(2,'state2')">
+              <div class="steckdose-Main">
+                  <div class="round">
+                      <div class="round1">
+                          <div class="topPE"></div>
+                          <div class="contact1"></div>
