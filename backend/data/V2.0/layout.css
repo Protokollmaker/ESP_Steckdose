@@ -199,7 +199,7 @@ input {
 
 .end_edit {
     position: absolute;
-    transform: translate(175px, 5px) rotate(50deg);
+    transform: translate(175px, 5px);
 }
 
 .card:not([data-edit="true"]) .end_edit{
