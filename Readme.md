@@ -5,8 +5,15 @@
 **Das ist ein Schuleproject** </br>
 Das Ziel dieses Projectes ist Steckdosen von einen Web interface zu steuern.</br>
 Hier ein Bild: </br>
-<img src='https://github.com/Protokollmaker/ESP_Steckdose/blob/master/docs/image/AppImg.png?raw=true' alt="applicaionen Bild">
+<img src="https://github.com/Protokollmaker/ESP_Steckdose/blob/master/docs/image/AppImage.png?raw=true" alt="applicaionen Bild">
 ## Get Startet
 ### Hardware
+1. [Materialien die Benötigt werden](https://github.com/Protokollmaker/ESP_Steckdose/blob/master/docs/matherial.md)
+1. []()
 ### Software
 ## TODO
+
+### Ideen
+- Hinzufügen von Zeiteingabe
+- Timer die sich widerholen
+- dark thema
