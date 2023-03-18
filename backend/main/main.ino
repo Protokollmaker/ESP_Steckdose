@@ -3,6 +3,7 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include "password.h"
+#include "config.h"
 #include <ArduinoJson.h>
 #include "LittleFS.h"
 #include <ESP8266HTTPClient.h>
@@ -11,25 +12,6 @@
 // Replace with your network credentials
 const char* ssid = SSID_WLAN;
 const char* password = PASSWORD_WLAN;
-#define RELAY_NUMBER 5
-#define TIMER_NUMBER RELAY_NUMBER
-#define BLINK_LEDS {0,2,14,12,13}
-#define SHIFT_OUT 16           // GPIO DO
-#define SHIFT_SHIFT 5          // GPIO D1
-#define SHIFT_OUTPUT_ENABLE 4  //GPIO D2
-
-#define URL_INDEX_HTML1  "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/half1index.html"
-#define URL_INDEX_HTML2  "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/half2index.html"
-#define URL_INDEX_CSS   "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/layout.css"
-#define URL_INDEX_JS    "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/layout.js"
-#define FILE_INDEX_HTML "/index.html"
-#define FILE_INDEX_CSS  "/style.css"
-#define FILE_INDEX_JS   "/index.js"
-
-#define LOG_DOWNLADE(URL, FILE) Serial.print("[Downlade File] start Downladeing html "); \
-                                Serial.print(FILE); \
-                                Serial.print(" from "); \
-                                Serial.println(URL);
 
 //int timerRelay[TIMER_NUMBER];
 int timer[TIMER_NUMBER];
@@ -150,19 +132,8 @@ bool appendToFile(const char* filename, const char* fileURL){
     return 0;
 }
 
-void printMessage(){
-    Serial.printf("test");
-}
-
-//Ticker timer1(printMessage, 500);
-//int tiemr = 0;
-
 bool getRelayState(int t_relay){
     return relayState & (1 << t_relay);
-}
-
-void notifyClients() {
-  ws.textAll(String(ledState));
 }
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
@@ -195,6 +166,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     }
     if (!strcmp(eventtype, "stopTimer")){
       timerRun[doc["timerID"].as<int>()] = doc["state"].as<bool>();
+      digitalWrite(blink_pins[doc["timerID"].as<int>()], 0);
     }
     if   (!strcmp(eventtype, "UpdateFrontend")) {
         if (!strcmp(doc["file"], FILE_INDEX_HTML)) {
@@ -305,6 +277,7 @@ void setup(){
 
   for (int i = 0; i < RELAY_NUMBER; i++){
       pinMode(blink_pins[i], OUTPUT);
+      digitalWrite(blink_pins[i], 0);
   }
   // Route for root / web page
   if (!LittleFS.exists(FILE_INDEX_HTML)) {
@@ -322,7 +295,6 @@ void setup(){
       downloadToFile(FILE_INDEX_JS, URL_INDEX_JS);
   }
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){ 
-      //request->send(LittleFS, FILE_INDEX_HTML, "text/html");
       request->send(LittleFS, FILE_INDEX_HTML, "text/html", false, processor); 
   });
   server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){ 
