@@ -10,6 +10,7 @@ Hier ein Bild: </br>
 ### Hardware
 1. [Materialien die Benötigt werden](https://github.com/Protokollmaker/ESP_Steckdose/blob/master/docs/matherial.md)
 1. []()
+1.
 ### Software
 1. Downlade [Arduino ide](https://www.arduino.cc/en/software)
 1. Install Lib manuel [🔗Install LittleLS](https://arduino-esp8266.readthedocs.io/en/latest/filesystem.html) </br> Wichtig: es muss kein upload Butten da sein, dies geht mit IDE 2.X noch nicht.
@@ -18,9 +19,17 @@ Hier ein Bild: </br>
 1. upload skatch zu Microcontroller
 1. Öffne serial Console und notiere die IP Adresse die angezeigt wird, wenn keine angezeigt wird drücke den Reset Knopf auf den Borad
 1. gebe in den Browser http://{deine IP}/ hier soltest du die Website wie oben sehen
+## Get updates
+- update main.ino ist einfach lade das script neu hoch
+- update Web interfase sende </br>
+{"eventtype":"UpdateFrontend","file":"/index.html"}</br>
+{"eventtype":"UpdateFrontend","file":"/index.js"}</br>
+{"eventtype":"UpdateFrontend","file":"/style.css"} und </br>
+{"eventtype":"restat"}</br>
+Dann werden die Front end files neu heruntergeladen [Wie Sende ich diese Packete?](https://github.com/Protokollmaker/ESP_Steckdose/blob/master/docs/sendPackets.md). </br>
 
 ## TODO
-
+- mache das updaten des Frontents einfacher
 ### Ideen
 - Hinzufügen von Zeiteingabe
 - Timer die sich widerholen
