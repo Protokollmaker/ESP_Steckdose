@@ -7,10 +7,9 @@
 #define SHIFT_SHIFT 5          // GPIO D1
 #define SHIFT_OUTPUT_ENABLE 4  //GPIO D2
 
-#define URL_INDEX_HTML1  "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/half1index.html"
-#define URL_INDEX_HTML2  "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/half2index.html"
-#define URL_INDEX_CSS   "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/layout.css"
-#define URL_INDEX_JS    "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/layout.js"
+#define URL_INDEX_HTML  "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/index.html"
+#define URL_INDEX_CSS   "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/style.css"
+#define URL_INDEX_JS    "https://raw.githubusercontent.com/Protokollmaker/ESP_Steckdose/master/backend/data/V2.0/index.js"
 #define FILE_INDEX_HTML "/index.html"
 #define FILE_INDEX_CSS  "/style.css"
 #define FILE_INDEX_JS   "/index.js"
