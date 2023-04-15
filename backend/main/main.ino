@@ -7,7 +7,7 @@
 #include <ArduinoJson.h>
 #include "LittleFS.h"
 #include <ESP8266HTTPClient.h>
-#include <BearSSLHelpers.h>
+#include <WiFiClientSecureBearSSL.h>
 
 // Replace with your network credentials
 const char* ssid = SSID_WLAN;
@@ -59,30 +59,77 @@ bool deleteFile(const char* filename) {
 }
 
 bool downloadToFile(const char* filename, const char* fileURL){
-  File file = LittleFS.open(filename, "w");
-  if (!file) {
-      Serial.println("[LittleFS] Failed to open file for writing");
-      return 1;
-  }
-  BearSSL::WiFiClientSecure client;
-  client.setInsecure();
-
-  HTTPClient http;
-  http.begin(client, fileURL);
-
-  int httpCode = http.GET();
-  if (httpCode == HTTP_CODE_OK) {
-    WiFiClient* stream = http.getStreamPtr();
-    while (stream->connected() || stream->available()) {
-      if (stream->available()) {
-        Serial.write(stream->read());
-        auto bytesWritten = file.write(stream->read());
-      }
+    std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
+    client->setInsecure();
+    HTTPClient https;
+    Serial.print("[HTTPS] begin...\n");
+    if (!https.begin(*client, fileURL)) {
+        Serial.printf("[HTTPS] Unable to connect\n");
+        return 1;
     }
-  }
+    Serial.print("[HTTPS] GET...\n");
+    int httpCode = https.GET();
+    if (!(httpCode > 0)) {
+        Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
+        return 1;
+    }
+    // HTTP header has been send and Server response header has been handled
+    Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
 
-  http.end();
-  return 0;
+    // file found at server
+    if (!(httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)) {
+        Serial.printf("[HTTPS] error \n");
+        return 1;
+    }
+    String payload = https.getString();
+    File file = LittleFS.open(filename, "w");
+    if (!file) {
+        Serial.println("[LittleFS] Failed to open file for writing");
+        return 1;
+    }
+
+    auto bytesWritten = file.write(payload.c_str(), payload.length());
+    Serial.printf("[LittleFS] bytesWritten: %d\n", bytesWritten);
+    Serial.printf("should be %d\n", payload.length());
+    file.close();
+    return 0;
+}
+
+bool appendToFile(const char* filename, const char* fileURL){
+    std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
+    client->setInsecure();
+    HTTPClient https;
+    Serial.print("[HTTPS] begin...\n");
+    if (!https.begin(*client, fileURL)) {
+        Serial.printf("[HTTPS] Unable to connect\n");
+        return 1;
+    }
+    Serial.print("[HTTPS] GET...\n");
+    int httpCode = https.GET();
+    if (!(httpCode > 0)) {
+        Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
+        return 1;
+    }
+    // HTTP header has been send and Server response header has been handled
+    Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
+
+    // file found at server
+    if (!(httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)) {
+        Serial.printf("[HTTPS] error \n");
+        return 1;
+    }
+    String payload = https.getString();
+    File file = LittleFS.open(filename, "a");
+    if (!file) {
+        Serial.println("[LittleFS] Failed to open file for writing");
+        return 1;
+    }
+
+    auto bytesWritten = file.write(payload.c_str(), payload.length());
+    Serial.printf("[LittleFS] bytesWritten: %d\n", bytesWritten);
+    Serial.printf("should be %d\n", payload.length());
+    file.close();
+    return 0;
 }
 
 bool getRelayState(int t_relay){
@@ -234,8 +281,10 @@ void setup(){
   }
   // Route for root / web page
   if (!LittleFS.exists(FILE_INDEX_HTML)) {
-      LOG_DOWNLADE(FILE_INDEX_HTML, URL_INDEX_HTML);
-      downloadToFile(FILE_INDEX_HTML, URL_INDEX_HTML);
+      LOG_DOWNLADE(FILE_INDEX_HTML, URL_INDEX_HTML1);
+      downloadToFile(FILE_INDEX_HTML, URL_INDEX_HTML1);
+      LOG_DOWNLADE(FILE_INDEX_HTML, URL_INDEX_HTML2);
+      appendToFile(FILE_INDEX_HTML, URL_INDEX_HTML2);
   }
   if (!LittleFS.exists(FILE_INDEX_CSS)) {
       LOG_DOWNLADE(FILE_INDEX_CSS, URL_INDEX_CSS);
