@@ -87,7 +87,6 @@ bool downloadToFile(const char* filename, const char* fileURL){
         Serial.println("[LittleFS] Failed to open file for writing");
         return 1;
     }
-
     auto bytesWritten = file.write(payload.c_str(), payload.length());
     Serial.printf("[LittleFS] bytesWritten: %d\n", bytesWritten);
     Serial.printf("should be %d\n", payload.length());
@@ -291,8 +290,10 @@ void setup(){
       downloadToFile(FILE_INDEX_CSS, URL_INDEX_CSS);
   }
   if (!LittleFS.exists(FILE_INDEX_JS)) {
-      LOG_DOWNLADE(FILE_INDEX_JS, URL_INDEX_JS);
-      downloadToFile(FILE_INDEX_JS, URL_INDEX_JS);
+      LOG_DOWNLADE(FILE_INDEX_JS, URL_INDEX_JS1);
+      downloadToFile(FILE_INDEX_JS, URL_INDEX_JS1);
+      LOG_DOWNLADE(FILE_INDEX_JS, URL_INDEX_JS2);
+      appendToFile(FILE_INDEX_JS, URL_INDEX_JS2);
   }
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){ 
       request->send(LittleFS, FILE_INDEX_HTML, "text/html", false, processor); 
