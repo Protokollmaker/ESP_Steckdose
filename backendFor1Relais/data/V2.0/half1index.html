@@ -1,0 +1,48 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>ESP Web Server</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ESP Web Server</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="index.js"></script>
+</head>
+
+<body>
+    <div class="topnav">
+        <h1>ESP WebSocket Server</h1>
+    </div>
+    <div class="content">
+        <div class="card tick" id="timer0" data-time="%Timer0%" data-timerrun="%Run0%" data-timerstate="%TimerTurn0%"
+            data-edit=false data-editrun="true" data-editturn="false">
+            <button class="socket" id="state0" data-state="%STATE0%" onclick="ToggleRelay(0,'state0')">
+                <div class="steckdose-Main">
+                    <div class="round">
+                        <div class="round1">
+                            <div class="topPE"></div>
+                            <div class="contact1"></div>
+                            <div class="contact2"></div>
+                            <div class="bottomPE"></div>
+                        </div>
+                    </div>
+                </div>
+            </button>
+            <div class="controles">
+                <div class="end_edit" onclick="edit(false, 'timer0')">&#8619;</div>
+                <h4>Timer f&#252;r <button class="timeTurn" onclick="timerturn(0,'timer0')"></button></h4>
+                <div class="time">
+                    <span onclick="edit(true, 'timer0')"><input type="text" class="h" placeholder="0">h</span>
+                    <span onclick="edit(true, 'timer0')"><input type="text" class="min" placeholder="0">min</span>
+                    <span onclick="edit(true, 'timer0')"><input type="text" class="s" placeholder="0">s</span>
+                </div>
+            </div>
+            <div class="controles1">
+                <button class="but timerSend" onclick="send(0,'timer0')">Send</button><br />
+                <button class="but timerRun" onclick="stopTimer(0,'timer0')">Run</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

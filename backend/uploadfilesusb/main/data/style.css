@@ -1,0 +1,228 @@
+body {
+    margin: 0px;
+    text-align: center;
+    align-items: center;
+}
+
+h1 {
+    background-color: #2980B9;
+    color: #000000;
+    margin: 0px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.socket {
+    background-color: #f1f1f1;
+    border-radius: 3px;
+    height: 80px;
+    width: 80px;
+    border: none;
+    display: block;
+    justify-content: center;
+}
+.content {
+    display: inline-block;
+}
+
+.socket .steckdose-Main {
+    margin-top: 0px;
+    margin-left: 2px;
+    height: 60px;
+    width: 60px;
+    border-radius: 10px;
+    border: 2px solid #000000;
+
+    background-color: #ffffff;
+    display: flex;
+    justify-content: center;
+}
+
+.socket .steckdose-Main .round{
+    border: 2px solid #000000;
+    border-radius: 100px;
+    margin-top: 3px;
+    height: 50px;
+    width: 50px;
+    display: flex;
+    justify-content: center;
+}
+
+.round1 {
+    border: 2px solid #000000;
+    margin-top: 3px;
+    border-radius: 100px;
+    height: 40px;
+    width: 40px;
+    display: flex;
+    justify-content: center;
+}
+
+.topPE{
+    background-color: #000000;
+    height: 6px;
+    width: 3px;
+    border-bottom-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+}
+.contact1 {
+    position: absolute;
+    border: 2px solid #000000;
+    border-radius: 100px;
+    height: 6px;
+    width: 6px;
+    transform: translate(-10px, 14px);
+}
+.contact2 {
+    position: absolute;
+    border: 2px solid #000000;
+    border-radius: 100px;
+    height: 6px;
+    width: 6px;
+    transform: translate(10px, 14px);
+}
+
+.bottomPE{
+    position: absolute;
+    background-color: #000000;
+    height: 6px;
+    width: 3px;
+    border-top-right-radius: 20px;
+    border-top-left-radius: 20px;
+    transform: translate(0px, 34px);
+}
+
+/*.card[data-time="0"] .socket[data-state="ON"], 
+.card[data-time="-1"] .socket[data-state="ON"]{
+    background-color: #117A65;
+}
+
+
+.card[data-time="0"] .socket[data-state="OFF"], 
+.card[data-time="-1"] .socket[data-state="OFF"]{
+    background-color: #B03A2E;
+}
+
+.card:not([data-time="0"],[data-time="-1"], [data-time="%Timer0%"]) .socket {
+    background-color: #2980B9;
+}*/
+.socket[data-state="OFF"]{
+    background-color: #B03A2E;
+}
+
+.socket[data-state="ON"]{
+    background-color: #117A65;
+}
+
+.card {
+    display: flex;
+    margin-bottom: 20px;
+}
+.controles {
+    background-color: #f1f1f1;
+    margin-top: 5px;
+    margin-left: 5px;
+    height: 70px;
+    width: 200px;
+}
+h4 {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.controles1{
+    display: block;
+}
+
+.but{
+    border: none;
+    height: 30px;
+    width: 50px;
+    margin: 5px;
+}
+.controles {
+    padding-left: 10px;
+    display: block;
+}
+
+input {
+    height: 20px;
+    width: 30px;
+}
+
+.card[data-timerrun="true"] .controles1 .timerRun {
+    background-color: #117A65;
+}
+
+.card[data-timerrun="false"] .controles1 .timerRun {
+    background-color: #B03A2E;
+}
+
+.card[data-timerstate="true"] .timeTurn::before {
+    content: "An";
+    color: #117A65;
+}
+
+.card[data-timerstate="false"] .timeTurn::before {
+    content: 'Aus';
+    color: #B03A2E;
+}
+
+.card[data-edit="true"]:not([data-editturn="true"]) .timeTurn::before {
+    content: "An";
+    color: #117A65;
+}
+
+.card[data-edit="true"]:not([data-editturn="false"]) .timeTurn::before {
+    content: 'Aus';
+    color: #B03A2E;
+}
+
+.card[data-edit="true"]:not([data-editrun="false"])  .timerRun {
+    background-color: #117A65;
+}
+
+.card[data-edit="true"]:not([data-editrun="true"])  .timerRun {
+    background-color: #B03A2E;
+}
+
+.timeTurn {
+    font-size: 15px;
+    border: none;
+}
+
+.card .timeTurn::before {
+    content: 'undef';
+}
+
+.end_edit {
+    position: absolute;
+    transform: translate(175px, 5px);
+}
+
+.card:not([data-edit="true"]) .end_edit{
+    display: none;
+}
+
+.time{
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.time span {
+    display: table-cell;
+    text-align: center;
+}
+
+input {
+    background-color: #00000000;
+    border: none;
+    text-align: right; 
+    font-size: 25px;
+}
+*{
+    font-family:Sans-serif;
+}
