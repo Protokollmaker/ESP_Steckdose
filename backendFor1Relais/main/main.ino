@@ -38,14 +38,11 @@ void setRelayState(int t_relay, bool t_stata){
     Serial.print("[I/O] shiftout: ");
     Serial.println(relayState);
     // update Relay State on I/O PINS
-    shiftoutData();
+    digitalWrite(RELAY_PIN, relayState & 0b1);
 }
 
 void shiftoutData() {
-    digitalWrite(SHIFT_SHIFT, LOW);
-    shiftOut(SHIFT_OUT, SHIFT_SHIFT, MSBFIRST, relayState);
-    digitalWrite(SHIFT_OUTPUT_ENABLE, LOW);
-    digitalWrite(SHIFT_OUTPUT_ENABLE, HIGH);
+    
 }
 
 bool deleteFile(const char* filename) {
@@ -270,9 +267,7 @@ void setup(){
       return;
   }
   initWebSocket();
-  pinMode(SHIFT_OUT, OUTPUT);
-  pinMode(SHIFT_SHIFT, OUTPUT);
-  pinMode(SHIFT_OUTPUT_ENABLE, OUTPUT);
+  pinMode(RELAY_PIN, OUTPUT);
   
 
   for (int i = 0; i < RELAY_NUMBER; i++){
@@ -281,10 +276,8 @@ void setup(){
   }
   // Route for root / web page
   if (!LittleFS.exists(FILE_INDEX_HTML)) {
-      LOG_DOWNLADE(FILE_INDEX_HTML, URL_INDEX_HTML1);
-      downloadToFile(FILE_INDEX_HTML, URL_INDEX_HTML1);
-      LOG_DOWNLADE(FILE_INDEX_HTML, URL_INDEX_HTML2);
-      appendToFile(FILE_INDEX_HTML, URL_INDEX_HTML2);
+      LOG_DOWNLADE(FILE_INDEX_HTML, URL_INDEX_HTML);
+      downloadToFile(FILE_INDEX_HTML, URL_INDEX_HTML);
   }
   if (!LittleFS.exists(FILE_INDEX_CSS)) {
       LOG_DOWNLADE(FILE_INDEX_CSS, URL_INDEX_CSS);
